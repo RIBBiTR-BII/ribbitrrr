@@ -1,0 +1,5 @@
+Package: ribbitrrr
+Type: Package
+Title: RIBBiTR R Resources package
+Version: 0.0.1.0
+RoxygenNote: 7.3.2
