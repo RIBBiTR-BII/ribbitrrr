@@ -4,7 +4,7 @@
 \alias{HopToDB}
 \title{HopToDB}
 \usage{
-HopToDB(prefix = NA, timezone = NA)
+HopToDB(prefix = NA, timezone = NULL)
 }
 \arguments{
 \item{prefix}{an optional prefix (string) added to the front of connection credential variables to distinguish between sets of credentials.}
@@ -31,6 +31,6 @@ ribbitr_user = "[USERNAME]"
 ribbitr_password = "[PASSWORD]"
 
 # connect to your database with a single line of code
-dbcon <- HopToDB(ribbitr)
+dbcon <- HopToDB(prefix = "ribbitr")
 
 }

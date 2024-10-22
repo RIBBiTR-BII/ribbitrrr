@@ -19,10 +19,10 @@
 #' ribbitr_password = "[PASSWORD]"
 #' 
 #' # connect to your database with a single line of code
-#' dbcon <- HopToDB(ribbitr)
+#' dbcon <- HopToDB(prefix = "ribbitr")
 #' 
 #' @export
-HopToDB = function(prefix = NA, timezone = NA) {
+HopToDB = function(prefix = NA, timezone = NULL) {
   
   dbname = paste(na.omit(c(prefix, "dbname")), collapse = "_")
   host = paste(na.omit(c(prefix, "host")), collapse = "_")
