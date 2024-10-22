@@ -31,19 +31,20 @@ HopToDB = function(prefix = NA, timezone = NULL) {
   password = paste(na.omit(c(prefix, "password")), collapse = "_")
   
   tryCatch({
-    print("Connecting to Database... ")
-    con <- dbConnect(dbDriver("Postgres"),
+    cat("Connecting to database... ")
+    dbcon <- dbConnect(dbDriver("Postgres"),
                      dbname = Sys.getenv(dbname),
                      host = Sys.getenv(host),
                      port = Sys.getenv(port),
                      user = Sys.getenv(user),
                      password = Sys.getenv(password),
                      timezone = timezone)
-    print("Success!")
+    cat("Success!\n")
   },
   error=function(cond) {
-    message("\nUnable to connect to Database: ", cond$message)
+    message("\nUnable to connect: ", cond$message,  "\n")
   })
+  return(dbcon)
 }
 
 #' Table primary key
