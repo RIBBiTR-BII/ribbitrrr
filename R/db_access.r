@@ -1,4 +1,45 @@
 
+#' HopToDB
+#'
+#' A simple function to easily to the RIBBiTR (or another) remote database.
+#' @param db_credentials A list containing the following database connection credentials (see \link[DBI]{dbConnect}): dbname - the database name, host - the database host, port - the database port, user - your database username, password - your database password.
+#' @param timezone an optional timezone parameter to help convert data from various timezones to your local time. Valid options are found using \link[lubridate]{OlsonNames}.
+#' @return database connection object, to be passed to other functions (e.g. \link[DBI]{dbListTables}, \link[dbplyr]{tbl}, etc.).
+#' @examples
+#' 
+#' # open your local .Renviron filero
+#' usethis::edit_r_environ()
+#' 
+#' # copy the following to .Renviron, replacing corresponding database credentials
+#' ribbitr_db = list(
+#'   dbname = "[DATABASE_NAME]"
+#'   host = "[DATABASE_HOST]"
+#'   port = "[DATABASE_PORT]"
+#'   user = "[USERNAME]"
+#'   password = "[PASSWORD]"
+#' )
+#' 
+#' # connect to your database with a single line of code
+#' dbcon <- HopToDB(ribbitr_db)
+#' 
+#' @export
+HopToDB = function(db_credentials, timezone = NA) {
+  tryCatch({
+    print("Connecting to Database... ")
+    con <- dbConnect(dbDriver("Postgres"),
+                     dbname = db_credentials$dbname,
+                     host = db_credentials$host,
+                     port = db_credentials$port,
+                     user = db_credentials$user,
+                     password = db_credentials$password,
+                     timezone = timezone)
+    print("Success!")
+  },
+  error=function(cond) {
+    message("\nUnable to connect to Database: ", cond$message)
+  })
+}
+
 #' Table primary key
 #'
 #' Identify the primary key column(s) for a given table in the database metadata. A table's primary key caries a unique and not-null constraint, and is used to uniquely identify the rows in the table. There is only one primary key per table, usually (though not necessarily) single column.
