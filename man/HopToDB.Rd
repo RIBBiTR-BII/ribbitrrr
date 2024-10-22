@@ -4,10 +4,10 @@
 \alias{HopToDB}
 \title{HopToDB}
 \usage{
-HopToDB(db_credentials, timezone = NA)
+HopToDB(prefix = NA, timezone = NA)
 }
 \arguments{
-\item{db_credentials}{A list containing the following database connection credentials (see \link[DBI]{dbConnect}): dbname - the database name, host - the database host, port - the database port, user - your database username, password - your database password.}
+\item{prefix}{an optional prefix (string) added to the front of connection credential variables to distinguish between sets of credentials.}
 
 \item{timezone}{an optional timezone parameter to help convert data from various timezones to your local time. Valid options are found using \link[lubridate]{OlsonNames}.}
 }
@@ -15,23 +15,22 @@ HopToDB(db_credentials, timezone = NA)
 database connection object, to be passed to other functions (e.g. \link[DBI]{dbListTables}, \link[dbplyr]{tbl}, etc.).
 }
 \description{
-A simple function to easily to the RIBBiTR (or another) remote database.
+A simple function to easily to the RIBBiTR (or another) remote database. The following database connection credentials must be saved to your local .Renviron file(see \link[DBI]{dbConnect}): dbname - the database name, host - the database host, port - the database port, user - your database username, password - your database password. Variables may be defined with an optional prefix seperated by and underscore (e.g. "ribbitr_dbname") to distinguish multiple connections.
 }
 \examples{
 
-# open your local .Renviron filero
+# open your local .Renviron file
 usethis::edit_r_environ()
 
 # copy the following to .Renviron, replacing corresponding database credentials
-ribbitr_db = list(
-  dbname = "[DATABASE_NAME]"
-  host = "[DATABASE_HOST]"
-  port = "[DATABASE_PORT]"
-  user = "[USERNAME]"
-  password = "[PASSWORD]"
-)
+
+ribbitr_dbname = "[DATABASE_NAME]"
+ribbitr_host = "[DATABASE_HOST]"
+ribbitr_port = "[DATABASE_PORT]"
+ribbitr_user = "[USERNAME]"
+ribbitr_password = "[PASSWORD]"
 
 # connect to your database with a single line of code
-dbcon <- HopToDB(ribbitr_db)
+dbcon <- HopToDB(ribbitr)
 
 }
