@@ -24,11 +24,11 @@ usethis::edit_r_environ()
 
 # copy the following to .Renviron, replacing corresponding database credentials
 
-ribbitr_dbname = "[DATABASE_NAME]"
-ribbitr_host = "[DATABASE_HOST]"
-ribbitr_port = "[DATABASE_PORT]"
-ribbitr_user = "[USERNAME]"
-ribbitr_password = "[PASSWORD]"
+ribbitr.dbname = "[DATABASE_NAME]"
+ribbitr.host = "[DATABASE_HOST]"
+ribbitr.port = "[DATABASE_PORT]"
+ribbitr.user = "[USERNAME]"
+ribbitr.password = "[PASSWORD]"
 
 # connect to your database with a single line of code
 dbcon <- HopToDB(prefix = "ribbitr")

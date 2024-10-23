@@ -12,11 +12,11 @@
 #' 
 #' # copy the following to .Renviron, replacing corresponding database credentials
 #' 
-#' ribbitr_dbname = "[DATABASE_NAME]"
-#' ribbitr_host = "[DATABASE_HOST]"
-#' ribbitr_port = "[DATABASE_PORT]"
-#' ribbitr_user = "[USERNAME]"
-#' ribbitr_password = "[PASSWORD]"
+#' ribbitr.dbname = "[DATABASE_NAME]"
+#' ribbitr.host = "[DATABASE_HOST]"
+#' ribbitr.port = "[DATABASE_PORT]"
+#' ribbitr.user = "[USERNAME]"
+#' ribbitr.password = "[PASSWORD]"
 #' 
 #' # connect to your database with a single line of code
 #' dbcon <- HopToDB(prefix = "ribbitr")
@@ -24,11 +24,11 @@
 #' @export
 HopToDB = function(prefix = NA, timezone = NULL) {
   
-  dbname = paste(na.omit(c(prefix, "dbname")), collapse = "_")
-  host = paste(na.omit(c(prefix, "host")), collapse = "_")
-  port = paste(na.omit(c(prefix, "port")), collapse = "_")
-  user = paste(na.omit(c(prefix, "user")), collapse = "_")
-  password = paste(na.omit(c(prefix, "password")), collapse = "_")
+  dbname = paste(na.omit(c(prefix, "dbname")), collapse = ".")
+  host = paste(na.omit(c(prefix, "host")), collapse = ".")
+  port = paste(na.omit(c(prefix, "port")), collapse = ".")
+  user = paste(na.omit(c(prefix, "user")), collapse = ".")
+  password = paste(na.omit(c(prefix, "password")), collapse = ".")
   
   tryCatch({
     cat("Connecting to database... ")
@@ -74,7 +74,7 @@ tbl_pkey = function(tbl_name, metadata_columns) {
 #' @export
 tbl_fkey = function(tbl_name, metadata_columns) {
   metadata_columns %>%
-    filter(table_name == table_str,
+    filter(table_name == table_name,
            key_type == "FK") %>%
     pull(column_name)
 }
@@ -90,7 +90,7 @@ tbl_fkey = function(tbl_name, metadata_columns) {
 #' @export
 tbl_nkey = function(tbl_name, metadata_columns) {
   metadata_columns %>%
-    filter(table_name == table_str,
+    filter(table_name == table_name,
            natural_key) %>%
     pull(column_name)
 }
