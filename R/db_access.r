@@ -117,8 +117,17 @@ tbl_keys = function(tbl_name, metadata_columns) {
   )))
 }
 
-# in dev
-
+#' Identify reference (linked) tables
+#'
+#' For each foreign key in tbl_name, pull information on the associated reference table.
+#' @param tbl_name The name of the table of interest (string)
+#' @param metadata_columns Column metadata containing the table of interest (Data Frame)
+#' @return Returns a link object (list of referenced tables and their attributes)
+#' @examples 
+#' 
+#' capture_link = tbl_link("capture", mdc)
+#' 
+#' @export
 tbl_link = function(tbl_name, metadata_columns) {
   link = list()
   link[["root"]] = tbl_name
@@ -129,35 +138,113 @@ tbl_link = function(tbl_name, metadata_columns) {
   
   fkey_vec = tbl_fkey(tbl_name, mdc)
   
-  for (ff in 1:length(fkey_vec)) {
-    fkey = fkey_vec[ff]
+  for (ffkey in fkey_vec) {
+    pkey = ffkey
     
     tbl_parent = metadata_columns %>%
-      filter(column_name == fkey,
+      filter(column_name == pkey,
              key_type == "PK") %>%
-      pull(table_name)
+      select(table_schema, table_name) %>%
+      collect()
     
-    nkey = tbl_nkey(tbl_parent, metadata_columns)
+    nkey = tbl_nkey(tbl_parent$table_name, metadata_columns)
+    fkey = tbl_fkey(tbl_parent$table_name, metadata_columns)
     
-    parents[[ff]] = list(name=tbl_parent,
-                         pkey=fkey,
-                         nkey=nkey)
+    parents[[tbl_parent$table_name]] = list(schema=tbl_parent$table_schema,
+                                            name=tbl_parent$table_name,
+                                            pkey=pkey,
+                                            nkey=nkey,
+                                            fkey=fkey)
   }
   link[["parents"]] = parents
   return(link)
 }
 
 
-tbl_join = function(dbcon, chain) {
+tbl_chain = function(tbl_name, metadata_columns, until=NA) {
+  chain = list()
+  tbl_list = list(tbl_name)
+  tbl_remaining = TRUE
   
-  tbl = tbl(dbcon, chain$root)
+  # nest in list if not already
+  until = list(unlist(until))
   
-  for (ii in 1:length(chain$parents)) {
-    tbl_next = tbl(dbcon, chain$parents[[ii]]$name)
+  while (tbl_remaining) {
     
-    tbl = tbl %>%
-      left_join(tbl_next, by = c(chain$parents[[ii]]$pkey))
+    # pop tbl_list
+    tbl_active = tbl_list[[1]]
+    tbl_list[[1]] = NULL
+    
+    link_active = tbl_link(tbl_active, metadata_columns)
+    
+    if (length(link_active$parents) > 0) {
+      for (ll in link_active$parents) {
+        
+        if (!(ll$name %in% until)) {
+          # add to search list, unless
+          tbl_list <- append(tbl_list, ll$name)
+        }
+        
+        chain$parents[[ll$name]] = ll
+      }
+    }
+    
+    tbl_remaining = length(tbl_list)
+    
+  }
+  
+  return(chain)
+}
+
+
+tbl_join = function(dbcon, link, tbl=NA, join="left", by="pkey", columns=NA) {
+  
+  if (is.na(tbl)[[1]]) {
+    tbl = tbl(dbcon, link$root)
+  }
+  
+  
+  for (pp in link$parents) {
+    tbl_next = tbl(dbcon, Id(pp$schema, pp$name)) %>%
+      select(any_of(na.omit(unique(unlist(c(
+        pp$pkey,
+        pp$nkey,
+        pp$fkey,
+        columns
+      ))))))
+    
+    cat("Joining with", pp$name, "...")
+    
+    if (join == "left") {
+      tbl = tbl %>%
+        left_join(tbl_next, by = c(pp[[by]]))
+    } else if (join == "full") {
+      tbl = tbl %>%
+        full_join(tbl_next, by = c(pp[[by]]))
+    } else if (join == "inner") {
+      tbl = tbl %>%
+        inner_join(tbl_next, by = c(pp[[by]]))
+    } else {
+      stop(join, " is not a valid join type. Should it be programmed in?")
+    }
+    
+    cat("done.\n")
+    
   }
   
   return(tbl)
+}
+
+
+tbl_chain_join = function(dbcon, chain, tbl=NA, join="left", on="pkey", columns=NA) {
+  # fetch table if not provided
+  if (is.na(tbl)[[1]]) {
+    tbl_running = tbl(dbcon, link$root)
+  } else {
+    tbl_running = tbl
+  }
+  
+  tbl_running = tbl_join(dbcon, link, tbl=tbl_running, join=join, on=on, columns=columns)
+  
+  return(tbl_running)
 }
