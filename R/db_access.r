@@ -74,7 +74,7 @@ tbl_pkey = function(tbl_name, metadata_columns) {
 #' @export
 tbl_fkey = function(tbl_name, metadata_columns) {
   metadata_columns %>%
-    filter(table_name == table_name,
+    filter(table_name == tbl_name,
            key_type == "FK") %>%
     pull(column_name)
 }
@@ -90,7 +90,7 @@ tbl_fkey = function(tbl_name, metadata_columns) {
 #' @export
 tbl_nkey = function(tbl_name, metadata_columns) {
   metadata_columns %>%
-    filter(table_name == table_name,
+    filter(table_name == tbl_name,
            natural_key) %>%
     pull(column_name)
 }
@@ -103,15 +103,17 @@ tbl_nkey = function(tbl_name, metadata_columns) {
 #' @return The uniqie name(s) of the columns with primary, foreign, or natural key status in the table provided. If a column has multiple statuses, it will show up only once.
 #' @examples 
 #' survey_keys <- tbl_keys('survey', mdc)
+#' 
+#' # collect table with all key columns from DB
 #' db_survey <- tbl(dbcon, "survey") %>%
 #'                 select(all_of(survey_keys)) %>%
 #'                 collect()
 #' @export
 tbl_keys = function(tbl_name, metadata_columns) {
   return(unique(c(
-    tbl_pkey(table_str, metadata_columns=metadata_columns),
-    tbl_nkey(table_str, metadata_columns=metadata_columns),
-    tbl_fkey(table_str, metadata_columns=metadata_columns)
+    tbl_pkey(tbl_name, metadata_columns=metadata_columns),
+    tbl_nkey(tbl_name, metadata_columns=metadata_columns),
+    tbl_fkey(tbl_name, metadata_columns=metadata_columns)
   )))
 }
 

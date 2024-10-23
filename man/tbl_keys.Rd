@@ -19,6 +19,8 @@ Identify primary, foreign, and natural key columns for a given table.
 }
 \examples{
 survey_keys <- tbl_keys('survey', mdc)
+
+# collect table with all key columns from DB
 db_survey <- tbl(dbcon, "survey") \%>\%
                 select(all_of(survey_keys)) \%>\%
                 collect()
