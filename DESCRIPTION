@@ -5,6 +5,6 @@ Version: 0.0.1.0
 Encoding: UTF-8
 License: GNU General Public License v3.0
 Author: Cob Staines
-Maintainer: Cob Staines
+Maintainer: Cob Staines <cobstainesconsulting@gmail.com>
 Description: RIBBiTR R Resources (or “ribbitrrr”) is an R package to support the empowered use of the Resilience Institute Bridging Biological Training and Research (RIBBiTR) database (see https://ribbitr.com/). This package contains R functions to facilitate data connection, discovery, querying, and manipulation to meet research and team science project goals.
 RoxygenNote: 7.3.2
