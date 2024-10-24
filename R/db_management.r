@@ -16,6 +16,7 @@
 #' data_to_update = comparison$update
 #' data_orphans = comparison$orphan
 #' data_duplicates = comparison$duplicate
+#' @importFrom dplyr bind_rows anti_join group_by_at count ungroup mutate filter select inner_join
 #' @export
 compare_for_staging = function(data_new, data_old, key_columns, insert=TRUE, update=TRUE, orphan=FALSE, duplicate=FALSE, return_all=FALSE){
 
@@ -94,6 +95,7 @@ compare_for_staging = function(data_new, data_old, key_columns, insert=TRUE, upd
 #' temp_capture_tbl = stage_to_temp(dbcon, db_capture, novel_capture)
 #' pointer = tbl(dbcon, temp_capture_tbl)
 #' rows_upsert(db_capture, pointer, by=capture_pkey, in_place=TRUE)
+#' @importFrom DBI dbExecute dbWriteTable
 #' @export
 stage_to_temp <- function(dbcon, reference_table, novel_data) {
   # check that all novel_data columns exist in reference table
