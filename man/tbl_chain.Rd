@@ -2,7 +2,7 @@
 % Please edit documentation in R/db_access.r
 \name{tbl_chain}
 \alias{tbl_chain}
-\title{Recursively identify commutative reference ("explicitly or implicitly linked") tables}
+\title{Recursively identify linked reference tables}
 \usage{
 tbl_chain(tbl_name, metadata_columns, until = NA)
 }
@@ -17,7 +17,7 @@ tbl_chain(tbl_name, metadata_columns, until = NA)
 Returns a link object (list of all encountered referenced tables and their attributes)
 }
 \description{
-For each foreign key in tbl_name, pull information on the associated reference table. Do the same for any foreign keys found in this reference table, and so on. Stops when table network is exausted. Does not search beyond any tables listed in "until".
+For each foreign key in tbl_name, pull information on the associated reference table. Do the same for any foreign keys found in this reference table, and so on. Stops when table network is exausted. Does not search beyond any tables listed in "until". To identify one iteration of reference tables, use \link[ribbitrrr]{tbl_link}.
 }
 \examples{
 

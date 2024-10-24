@@ -120,9 +120,9 @@ tbl_keys = function(tbl_name, metadata_columns) {
   )))
 }
 
-#' Identify reference ("explicitly linked") tables
+#' Identify linked reference tables
 #'
-#' For each foreign key in tbl_name, pull information on the associated reference table.
+#' For each foreign key in tbl_name, pull information on the associated reference table. To do this recursively use \link[ribbitr]{tbl_chain}
 #' @param tbl_name The name of the table of interest (string)
 #' @param metadata_columns Column metadata containing the table of interest (Data Frame)
 #' @return Returns a link object listing referenced tables and their attributes
@@ -165,9 +165,9 @@ tbl_link = function(tbl_name, metadata_columns) {
   return(link)
 }
 
-#' Recursively identify commutative reference ("explicitly or implicitly linked") tables
+#' Recursively identify linked reference tables
 #'
-#' For each foreign key in tbl_name, pull information on the associated reference table. Do the same for any foreign keys found in this reference table, and so on. Stops when table network is exausted. Does not search beyond any tables listed in "until".
+#' For each foreign key in tbl_name, pull information on the associated reference table. Do the same for any foreign keys found in this reference table, and so on. Stops when table network is exausted. Does not search beyond any tables listed in "until". To identify one iteration of reference tables, use \link[ribbitrrr]{tbl_link}.
 #' @param tbl_name The name of the table of interest (string)
 #' @param metadata_columns Column metadata containing the table of interest (Data Frame)
 #' @param until Name(s) of table(s) beyond which you do not want to continue link search (string or list of strings)
@@ -213,7 +213,7 @@ tbl_chain = function(tbl_name, metadata_columns, until=NA) {
   return(chain)
 }
 
-#' Join table with reference
+#' Join table with reference tables
 #'
 #' Recursively join linked database tables following provided link object. Only primary, natural, and foreign key columns are joined by default. Specify additional columns to include in "columns"
 #' @param dbcon database connection object from \link[DBI]{dbConnect} or \link[ribbitrrr]{HopToDB}
@@ -231,9 +231,7 @@ tbl_chain = function(tbl_name, metadata_columns, until=NA) {
 #' tbl_capture = tbl(dbcon, Id("survey_data", "capture")) %>%
 #'   select(all_of(tbl_keys("capture", mdc)),
 #'        species_capture,
-#'        bd_swab_id,
-#'        life_stage,
-#'        svl_mm) %>%
+#'        bd_swab_id) %>%
 #'   filter(!is.na(bd_swab_id))
 #' 
 #' # create and filter join table

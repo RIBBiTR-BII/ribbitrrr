@@ -2,7 +2,7 @@
 % Please edit documentation in R/db_access.r
 \name{tbl_join}
 \alias{tbl_join}
-\title{Join table with reference}
+\title{Join table with reference tables}
 \usage{
 tbl_join(dbcon, link, tbl = NA, join = "left", by = "pkey", columns = NA)
 }
@@ -33,9 +33,7 @@ capture_chain = tbl_chain("capture", mdc, until=c("region"))
 tbl_capture = tbl(dbcon, Id("survey_data", "capture")) \%>\%
   select(all_of(tbl_keys("capture", mdc)),
        species_capture,
-       bd_swab_id,
-       life_stage,
-       svl_mm) \%>\%
+       bd_swab_id) \%>\%
   filter(!is.na(bd_swab_id))
 
 # create and filter join table
