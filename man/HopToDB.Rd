@@ -32,5 +32,4 @@ ribbitr.password = "[PASSWORD]"
 
 # connect to your database with a single line of code
 dbcon <- HopToDB(prefix = "ribbitr")
-
 }
