@@ -210,10 +210,8 @@ tbl_chain = function(tbl_name, metadata_columns, until=NA) {
     tbl_active = tbl_list[[1]]
     tbl_list[[1]] = NULL
     
-    
-    cat("Looking up table", tbl_active , "... ")
+    # lookup active table
     link_active = tbl_link(tbl_active, metadata_columns, return_root=return_root)
-    cat("done.\n")
     
     if (return_root) {
       chain$root = link_active$root
