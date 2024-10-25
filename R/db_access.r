@@ -133,12 +133,25 @@ tbl_keys = function(tbl_name, metadata_columns) {
 #' @export
 tbl_link = function(tbl_name, metadata_columns) {
   link = list()
-  link[["root"]] = tbl_name  # conserve initial table as "root"
+  
+  link$root$name = tbl_name  # conserve initial table as "root"
+  
+  tbl_root = tbl_parent = metadata_columns %>%
+    filter(table_name == tbl_name,
+           key_type == "PK") %>%
+    select(table_schema, column_name) %>%
+    collect()
+  
+  link$root$schema = tbl_root$table_schema
+  link$root$pkey = tbl_root$column_name
+  link$root$nkey = tbl_nkey(tbl_name, metadata_columns)
+  link$root$fkey = tbl_fkey(tbl_name, metadata_columns)
+    
   parents = list()
   
   tbl_current = tbl_name  # preload for while loop
   
-  fkey_vec = tbl_fkey(tbl_name, mdc)  # working list for fkeys
+  fkey_vec = list(unlist(link$root$fkey))  # working list for fkeys
   
   for (ffkey in fkey_vec) {
     pkey = ffkey  # name change ~ point of view of referenced table
@@ -247,7 +260,13 @@ tbl_chain = function(tbl_name, metadata_columns, until=NA) {
 tbl_join = function(dbcon, link, tbl=NA, join="left", by="pkey", columns=NA) {
   # load table if not provided
   if (is.na(tbl)[[1]]) {
-    tbl = tbl(dbcon, link$root)
+    tbl = tbl(dbcon, link$root$name) %>%
+      select(any_of(unique(unlist(c(
+        link$root$pkey,
+        link$root$nkey,
+        link$root$fkey,
+        columns
+      )))))
   }
   
   # for each parent in link object
