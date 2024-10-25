@@ -9,10 +9,10 @@ HopToDB(prefix = NA, timezone = NULL)
 \arguments{
 \item{prefix}{an optional prefix (string) added to the front of connection credential variables to distinguish between sets of credentials.}
 
-\item{timezone}{an optional timezone parameter to help convert data from various timezones to your local time. Valid options are found using \link[lubridate]{OlsonNames}.}
+\item{timezone}{an optional timezone parameter to help convert data from various timezones to your local time.}
 }
 \value{
-database connection object, to be passed to other functions (e.g. \link[DBI]{dbListTables}, \link[dbplyr]{tbl}, etc.).
+database connection object, to be passed to other functions (e.g. \link[DBI]{dbListTables}, \link[dplyr]{tbl}, etc.).
 }
 \description{
 A simple function to easily to the RIBBiTR (or another) remote database. The following database connection credentials must be saved to your local .Renviron file(see \link[DBI]{dbConnect}): dbname - the database name, host - the database host, port - the database port, user - your database username, password - your database password. Variables may be defined with an optional prefix seperated by and underscore (e.g. "ribbitr_dbname") to distinguish multiple connections.

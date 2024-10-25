@@ -3,8 +3,8 @@
 #'
 #' A simple function to easily to the RIBBiTR (or another) remote database. The following database connection credentials must be saved to your local .Renviron file(see \link[DBI]{dbConnect}): dbname - the database name, host - the database host, port - the database port, user - your database username, password - your database password. Variables may be defined with an optional prefix seperated by and underscore (e.g. "ribbitr_dbname") to distinguish multiple connections.
 #' @param prefix an optional prefix (string) added to the front of connection credential variables to distinguish between sets of credentials.
-#' @param timezone an optional timezone parameter to help convert data from various timezones to your local time. Valid options are found using \link[lubridate]{OlsonNames}.
-#' @return database connection object, to be passed to other functions (e.g. \link[DBI]{dbListTables}, \link[dbplyr]{tbl}, etc.).
+#' @param timezone an optional timezone parameter to help convert data from various timezones to your local time.
+#' @return database connection object, to be passed to other functions (e.g. \link[DBI]{dbListTables}, \link[dplyr]{tbl}, etc.).
 #' @examples
 #' 
 #' # open your local .Renviron file
@@ -20,10 +20,12 @@
 #' 
 #' # connect to your database with a single line of code
 #' dbcon <- HopToDB(prefix = "ribbitr")
-#' @importFrom DBI dbConnect dbDriver
+#' @importFrom DBI dbConnect dbDriver dbListTables
+#' @importFrom stats na.omit
+#' @importFrom usethis edit_r_environ
+#' @importFrom dplyr tbl
 #' @export
 HopToDB = function(prefix = NA, timezone = NULL) {
-  
   dbname = paste(na.omit(c(prefix, "dbname")), collapse = ".")
   host = paste(na.omit(c(prefix, "host")), collapse = ".")
   port = paste(na.omit(c(prefix, "port")), collapse = ".")
@@ -55,13 +57,13 @@ HopToDB = function(prefix = NA, timezone = NULL) {
 #' @return The name(s) of the columns comprising the primary key for the table provided.
 #' @examples 
 #' survey_pkey <- tbl_pkey('survey', mdc)
-#' @importFrom dplyr filter pull
+#' @importFrom dplyr %>% filter pull
 #' @export
 tbl_pkey = function(tbl_name, metadata_columns) {
   metadata_columns %>%
     filter(table_name == tbl_name,
            key_type == "PK") %>%
-    pull(column_name)
+    pull("column_name")
 }
 
 #' Table foreign key
@@ -72,13 +74,13 @@ tbl_pkey = function(tbl_name, metadata_columns) {
 #' @return The name(s) of the columns with foreign key status in the table provided
 #' @examples 
 #' survey_fkey <- tbl_fkey('survey', mdc)
-#' @importFrom dplyr filter pull
+#' @importFrom dplyr %>% filter pull
 #' @export
 tbl_fkey = function(tbl_name, metadata_columns) {
   metadata_columns %>%
     filter(table_name == tbl_name,
            key_type == "FK") %>%
-    pull(column_name)
+    pull("column_name")
 }
 
 #' Table natural key
@@ -89,13 +91,13 @@ tbl_fkey = function(tbl_name, metadata_columns) {
 #' @return The name(s) of the columns with natural key status in the table provided
 #' @examples 
 #' survey_nkey <- tbl_nkey('survey', mdc)
-#' @importFrom dplyr filter pull
+#' @importFrom dplyr %>% filter pull
 #' @export
 tbl_nkey = function(tbl_name, metadata_columns) {
   metadata_columns %>%
     filter(table_name == tbl_name,
            natural_key) %>%
-    pull(column_name)
+    pull("column_name")
 }
 
 #' All table keys
@@ -122,19 +124,19 @@ tbl_keys = function(tbl_name, metadata_columns) {
 
 #' Identify linked reference tables
 #'
-#' For each foreign key in tbl_name, pull information on the associated reference table. To do this recursively use \link[ribbitr]{tbl_chain}
+#' For each foreign key in tbl_name, pull information on the associated reference table. To do this recursively use \link[ribbitrrr]{tbl_chain}
 #' @param tbl_name The name of the table of interest (string)
 #' @param metadata_columns Column metadata containing the table of interest (Data Frame)
 #' @return Returns a link object listing referenced tables and their attributes
 #' @examples 
 #' 
 #' capture_link = tbl_link("capture", mdc)
-#' @importFrom dplyr filter select collect
+#' @importFrom dplyr %>% filter select collect
 #' @export
 tbl_link = function(tbl_name, metadata_columns) {
   link = list()
   
-  link$root$name = tbl_name  # conserve initial table as "root"
+  link$root$table = tbl_name  # conserve initial table as "root"
   
   tbl_root = tbl_parent = metadata_columns %>%
     filter(table_name == tbl_name,
@@ -169,7 +171,7 @@ tbl_link = function(tbl_name, metadata_columns) {
     fkey = tbl_fkey(tbl_parent$table_name, metadata_columns)
     #save all to parents list
     parents[[tbl_parent$table_name]] = list(schema=tbl_parent$table_schema,
-                                            name=tbl_parent$table_name,
+                                            table=tbl_parent$table_name,
                                             pkey=pkey,
                                             nkey=nkey,
                                             fkey=fkey)
@@ -193,6 +195,7 @@ tbl_chain = function(tbl_name, metadata_columns, until=NA) {
   chain = list()
   tbl_list = list(tbl_name)  # list of tables yet to search
   tbl_remaining = TRUE
+  pull_root = TRUE
   
   # nest in list if not already
   until = list(unlist(until))
@@ -206,16 +209,20 @@ tbl_chain = function(tbl_name, metadata_columns, until=NA) {
     
     link_active = tbl_link(tbl_active, metadata_columns)
     
+    if (pull_root) {
+      chain$root = link_active$root
+    }
+    
     # for each reference table found
     if (length(link_active$parents) > 0) {
       for (ll in link_active$parents) {
         
-        if (!(ll$name %in% until)) {
+        if (!(ll$table %in% until)) {
           # add to tbl_list, unless tbl is in "until"
-          tbl_list <- append(tbl_list, ll$name)
+          tbl_list <- append(tbl_list, ll$table)
         }
         
-        chain$parents[[ll$name]] = ll
+        chain$parents[[ll$table]] = ll
       }
     }
     
@@ -255,12 +262,14 @@ tbl_chain = function(tbl_name, metadata_columns, until=NA) {
 #' capture_brazil = tbl_capture_brazil %>%
 #'   collect()
 #' 
-#' @importFrom dplyr tbl select left_join full_join inner_join right_join
+#' @importFrom DBI Id
+#' @importFrom dplyr %>% tbl select any_of left_join full_join inner_join right_join
+#' @importFrom stats na.omit
 #' @export
 tbl_join = function(dbcon, link, tbl=NA, join="left", by="pkey", columns=NA) {
   # load table if not provided
   if (is.na(tbl)[[1]]) {
-    tbl = tbl(dbcon, link$root$name) %>%
+    tbl = tbl(dbcon, link$root$table) %>%
       select(any_of(unique(unlist(c(
         link$root$pkey,
         link$root$nkey,
@@ -272,7 +281,7 @@ tbl_join = function(dbcon, link, tbl=NA, join="left", by="pkey", columns=NA) {
   # for each parent in link object
   for (pp in link$parents) {
     # pull for
-    tbl_next = tbl(dbcon, Id(pp$schema, pp$name)) %>%
+    tbl_next = tbl(dbcon, Id(pp$schema, pp$table)) %>%
       select(any_of(na.omit(unique(unlist(c(
         pp$pkey,
         pp$nkey,
@@ -280,7 +289,7 @@ tbl_join = function(dbcon, link, tbl=NA, join="left", by="pkey", columns=NA) {
         columns
       ))))))
     
-    cat("Joining with", pp$name, "...")
+    cat("Joining with", pp$table, "...")
     
     if (join == "left") {
       tbl = tbl %>%

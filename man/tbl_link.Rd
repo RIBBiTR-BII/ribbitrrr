@@ -15,7 +15,7 @@ tbl_link(tbl_name, metadata_columns)
 Returns a link object listing referenced tables and their attributes
 }
 \description{
-For each foreign key in tbl_name, pull information on the associated reference table. To do this recursively use \link[ribbitr]{tbl_chain}
+For each foreign key in tbl_name, pull information on the associated reference table. To do this recursively use \link[ribbitrrr]{tbl_chain}
 }
 \examples{
 

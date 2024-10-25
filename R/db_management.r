@@ -16,7 +16,7 @@
 #' data_to_update = comparison$update
 #' data_orphans = comparison$orphan
 #' data_duplicates = comparison$duplicate
-#' @importFrom dplyr bind_rows anti_join group_by_at count ungroup mutate filter select inner_join
+#' @importFrom dplyr %>% bind_rows anti_join group_by_at count ungroup mutate filter select inner_join
 #' @export
 compare_for_staging = function(data_new, data_old, key_columns, insert=TRUE, update=TRUE, orphan=FALSE, duplicate=FALSE, return_all=FALSE){
 
