@@ -136,15 +136,15 @@ tbl_keys = function(tbl_name, metadata_columns) {
 tbl_link = function(tbl_name, metadata_columns) {
   link = list()
   
-  link$root$table = tbl_name  # conserve initial table as "root"
-  
   tbl_root = tbl_parent = metadata_columns %>%
     filter(table_name == tbl_name,
            key_type == "PK") %>%
     select(table_schema, column_name) %>%
     collect()
   
+  # record initial table as "root"
   link$root$schema = tbl_root$table_schema
+  link$root$table = tbl_name
   link$root$pkey = tbl_root$column_name
   link$root$nkey = tbl_nkey(tbl_name, metadata_columns)
   link$root$fkey = tbl_fkey(tbl_name, metadata_columns)
