@@ -19,16 +19,15 @@ A simple function to easily to the RIBBiTR (or another) remote database. The fol
 }
 \examples{
 
-# open your local .Renviron file
-usethis::edit_r_environ()
+## open your local .Renviron file
+# usethis::edit_r_environ
+## copy the following to .Renviron, replacing corresponding database credentials
 
-# copy the following to .Renviron, replacing corresponding database credentials
-
-ribbitr.dbname = "[DATABASE_NAME]"
-ribbitr.host = "[DATABASE_HOST]"
-ribbitr.port = "[DATABASE_PORT]"
-ribbitr.user = "[USERNAME]"
-ribbitr.password = "[PASSWORD]"
+# ribbitr.dbname = "[DATABASE_NAME]"
+# ribbitr.host = "[DATABASE_HOST]"
+# ribbitr.port = "[DATABASE_PORT]"
+# ribbitr.user = "[USERNAME]"
+# ribbitr.password = "[PASSWORD]"
 
 # connect to your database with a single line of code
 dbcon <- HopToDB(prefix = "ribbitr")
