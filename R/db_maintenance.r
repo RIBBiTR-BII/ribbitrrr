@@ -101,9 +101,7 @@ stage_to_temp <- function(dbcon, reference_table, novel_data) {
   # check that all novel_data columns exist in reference table
   ref_cols = colnames(reference_table)
   nov_cols = colnames(novel_data)
-  if (length(setdiff(nov_cols, ref_cols)) > 0) {
-    stop("Columns in preference_table and novel_data do not align.")
-  }
+
   
   # build meaningful temp table name: [schema].[reference_table]_temp
   table_path = as.character(reference_table$lazy_query$x)
@@ -112,9 +110,13 @@ stage_to_temp <- function(dbcon, reference_table, novel_data) {
   table_name = path_parts[[1]][2]
   temp_table_name = paste0(schema_name, "_", table_name, "_temp")
   
+  if (length(setdiff(nov_cols, ref_cols)) > 0) {
+    stop(paste0("Columns in reference_table ", table_name, " and novel_data do not align."))
+  }
+  
   # begin transaction
   
-  # drop table if exists
+  # drop temp table if exists
   suppressMessages(
     dbExecute(dbcon, paste0("DROP TABLE IF EXISTS ", temp_table_name, ";"))
   )

@@ -274,7 +274,7 @@ tbl_chain = function(tbl_name, metadata_columns, until=NA) {
 tbl_join = function(dbcon, link, tbl=NA, join="left", by="pkey", columns=NA) {
   # load table if not provided
   if (is.na(tbl)[[1]]) {
-    cat("Pulling table", link$root$table, "... ")
+    cat("Pulling", link$root$table, "... ")
     tbl = tbl(dbcon, Id(link$root$schema, link$root$table)) %>%
       select(any_of(na.omit(unique(unlist(c(
         link$root$pkey,
