@@ -19,7 +19,7 @@
 #' # ribbitr.password = "[PASSWORD]"
 #' 
 #' # connect to your database with a single line of code
-#' dbcon <- HopToDB(prefix = "ribbitr")
+#' dbcon <- HopToDB("ribbitr")
 #' @importFrom DBI dbConnect dbDriver dbListTables
 #' @importFrom RPostgres Postgres
 #' @importFrom stats na.omit
@@ -127,36 +127,39 @@ tbl_keys = function(tbl_name, metadata_columns) {
 #' For each foreign key in tbl_name, pull information on the associated reference table. To do this recursively use \link[ribbitrrr]{tbl_chain}
 #' @param tbl_name The name of the table of interest (string)
 #' @param metadata_columns Column metadata containing the table of interest (Data Frame)
+#' @param return_root Do you want to return info on tbl_name as "root" in the link object (TRUE by default, set to false when not needed for faster runtime)
 #' @return Returns a link object listing referenced tables and their attributes
 #' @examples 
 #' 
 #' capture_link = tbl_link("capture", mdc)
 #' @importFrom dplyr %>% filter select collect
 #' @export
-tbl_link = function(tbl_name, metadata_columns) {
+tbl_link = function(tbl_name, metadata_columns, return_root=TRUE) {
   link = list()
   
-  tbl_root = tbl_parent = metadata_columns %>%
-    filter(table_name == tbl_name,
-           key_type == "PK") %>%
-    select(table_schema, column_name) %>%
-    collect()
+  fkey = tbl_fkey(tbl_name, metadata_columns)
   
-  # record initial table as "root"
-  link$root$schema = tbl_root$table_schema
-  link$root$table = tbl_name
-  link$root$pkey = tbl_root$column_name
-  link$root$nkey = tbl_nkey(tbl_name, metadata_columns)
-  link$root$fkey = tbl_fkey(tbl_name, metadata_columns)
+  if (return_root) {
+    tbl_root = tbl_parent = metadata_columns %>%
+      filter(table_name == tbl_name,
+             key_type == "PK") %>%
+      select(table_schema, column_name) %>%
+      collect()
+    
+    # record initial table as "root"
+    link$root = list(schema = tbl_root$table_schema,
+                     table = tbl_name,
+                     pkey = tbl_root$column_name,
+                     nkey = tbl_nkey(tbl_name, metadata_columns),
+                     fkey = fkey)
+  }
     
   parents = list()
   
-  tbl_current = tbl_name  # preload for while loop
+  fkey_list = list(unlist(fkey))  # working list for fkeys
   
-  fkey_vec = list(unlist(link$root$fkey))  # working list for fkeys
-  
-  for (ffkey in fkey_vec) {
-    pkey = ffkey  # name change ~ point of view of referenced table
+  for (ff in fkey_list) {
+    pkey = ff # name change ~ point of view of referenced table
     
     # filter metadata columns for a column with pkey == fkey (requires unique pkey/fkey column names within database)
     tbl_parent = metadata_columns %>%
@@ -169,7 +172,7 @@ tbl_link = function(tbl_name, metadata_columns) {
     nkey = tbl_nkey(tbl_parent$table_name, metadata_columns)
     # identify fkeys
     fkey = tbl_fkey(tbl_parent$table_name, metadata_columns)
-    #save all to parents list
+    # save all to parents list
     parents[[tbl_parent$table_name]] = list(schema=tbl_parent$table_schema,
                                             table=tbl_parent$table_name,
                                             pkey=pkey,
@@ -195,7 +198,7 @@ tbl_chain = function(tbl_name, metadata_columns, until=NA) {
   chain = list()
   tbl_list = list(tbl_name)  # list of tables yet to search
   tbl_remaining = TRUE
-  pull_root = TRUE
+  return_root = TRUE  # init as true
   
   # nest in list if not already
   until = list(unlist(until))
@@ -207,10 +210,14 @@ tbl_chain = function(tbl_name, metadata_columns, until=NA) {
     tbl_active = tbl_list[[1]]
     tbl_list[[1]] = NULL
     
-    link_active = tbl_link(tbl_active, metadata_columns)
     
-    if (pull_root) {
+    cat("Looking up table", tbl_active , "... ")
+    link_active = tbl_link(tbl_active, metadata_columns, return_root=return_root)
+    cat("done.\n")
+    
+    if (return_root) {
       chain$root = link_active$root
+      return_root = FALSE
     }
     
     # for each reference table found
@@ -269,13 +276,15 @@ tbl_chain = function(tbl_name, metadata_columns, until=NA) {
 tbl_join = function(dbcon, link, tbl=NA, join="left", by="pkey", columns=NA) {
   # load table if not provided
   if (is.na(tbl)[[1]]) {
-    tbl = tbl(dbcon, link$root$table) %>%
+    cat("Pulling table", link$root$table, "... ")
+    tbl = tbl(dbcon, Id(link$root$schema, link$root$table)) %>%
       select(any_of(na.omit(unique(unlist(c(
         link$root$pkey,
         link$root$nkey,
         link$root$fkey,
         columns
       ))))))
+    cat("done.\n")
   }
   
   # for each parent in link object
@@ -289,7 +298,7 @@ tbl_join = function(dbcon, link, tbl=NA, join="left", by="pkey", columns=NA) {
         columns
       ))))))
     
-    cat("Joining with", pp$table, "...")
+    cat("Joining with", pp$table, "... ")
     
     if (join == "left") {
       tbl = tbl %>%

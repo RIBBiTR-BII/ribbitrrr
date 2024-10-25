@@ -30,5 +30,5 @@ A simple function to easily to the RIBBiTR (or another) remote database. The fol
 # ribbitr.password = "[PASSWORD]"
 
 # connect to your database with a single line of code
-dbcon <- HopToDB(prefix = "ribbitr")
+dbcon <- HopToDB("ribbitr")
 }

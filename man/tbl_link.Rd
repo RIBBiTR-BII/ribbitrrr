@@ -4,12 +4,14 @@
 \alias{tbl_link}
 \title{Identify linked reference tables}
 \usage{
-tbl_link(tbl_name, metadata_columns)
+tbl_link(tbl_name, metadata_columns, return_root = TRUE)
 }
 \arguments{
 \item{tbl_name}{The name of the table of interest (string)}
 
 \item{metadata_columns}{Column metadata containing the table of interest (Data Frame)}
+
+\item{return_root}{Do you want to return info on tbl_name as "root" in the link object (TRUE by default, set to false when not needed for faster runtime)}
 }
 \value{
 Returns a link object listing referenced tables and their attributes
