@@ -270,12 +270,12 @@ tbl_join = function(dbcon, link, tbl=NA, join="left", by="pkey", columns=NA) {
   # load table if not provided
   if (is.na(tbl)[[1]]) {
     tbl = tbl(dbcon, link$root$table) %>%
-      select(any_of(unique(unlist(c(
+      select(any_of(omit.na(unique(unlist(c(
         link$root$pkey,
         link$root$nkey,
         link$root$fkey,
         columns
-      )))))
+      ))))))
   }
   
   # for each parent in link object
