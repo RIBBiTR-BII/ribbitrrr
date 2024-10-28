@@ -114,7 +114,7 @@ stage_to_temp <- function(dbcon, reference_table, novel_data) {
   
   # stop if novel columns found
   if (length(novel_columns) > 0) {
-    stop(paste0("The following columns were in novel data which are absent from reference_table ", table_name, ": ", ))
+    stop(paste0("The following columns were in novel data which are absent from reference_table ", table_name, ": ", novel_columns))
   }
   
   # begin transaction
