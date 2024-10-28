@@ -110,8 +110,11 @@ stage_to_temp <- function(dbcon, reference_table, novel_data) {
   table_name = path_parts[[1]][2]
   temp_table_name = paste0(schema_name, "_", table_name, "_temp")
   
-  if (length(setdiff(nov_cols, ref_cols)) > 0) {
-    stop(paste0("Columns in reference_table ", table_name, " and novel_data do not align."))
+  novel_columns = setdiff(nov_cols, ref_cols)
+  
+  # stop if novel columns found
+  if (length(novel_columns) > 0) {
+    stop(paste0("The following columns were in novel data which are absent from reference_table ", table_name, ": ", ))
   }
   
   # begin transaction
