@@ -105,12 +105,13 @@ tbl_nkey = function(tbl_name, metadata_columns) {
 #' Identify primary, foreign, and natural key columns for a given table.
 #' @param tbl_name The name of the table of interest (string)
 #' @param metadata_columns Column metadata containing the table of interest (Data Frame)
-#' @return The uniqie name(s) of the columns with primary, foreign, or natural key status in the table provided. If a column has multiple statuses, it will show up only once.
+#' @return The unique name(s) of the columns with primary, foreign, or natural key status in the table provided. If a column has multiple statuses, it will show up only once.
 #' @examples 
 #' survey_keys <- tbl_keys('survey', mdc)
 #' 
 #' # collect table with all key columns from DB
-#' db_survey <- tbl(dbcon, "survey") %>%
+#' dbcon = HopToDB("ribbitr")
+#' db_survey <- dbplyr::tbl(dbcon, "survey") %>%
 #'                 select(all_of(survey_keys)) %>%
 #'                 collect()
 #' @export

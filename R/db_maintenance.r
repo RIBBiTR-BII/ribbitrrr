@@ -95,11 +95,13 @@ compare_for_staging = function(data_old, data_new, key_columns, insert=TRUE, upd
 #' @param novel_data Data Frame of rows to be pushed to the database
 #' @return If successful transaction, the name of the temporary table holding the data.
 #' @examples 
-#' dbcon = HopToDB("ribbitr")
-#' db_capture = dplyr::tbl(dbcon, "capture")
-#' temp_capture_tbl = stage_to_temp(dbcon, db_capture, novel_capture)
-#' pointer = dplyr::tbl(dbcon, temp_capture_tbl)
-#' rows_upsert(db_capture, pointer, by=capture_pkey, in_place=TRUE)
+#' if(FALSE) {
+#'   dbcon = HopToDB("ribbitr")
+#'   db_capture = dplyr::tbl(dbcon, "capture")
+#'   temp_capture_tbl = stage_to_temp(dbcon, db_capture, novel_capture)
+#'   pointer = dplyr::tbl(dbcon, temp_capture_tbl)
+#'   dbplyr::rows_upsert(db_capture, pointer, by=capture_pkey, in_place=TRUE)
+#' }
 #' @importFrom DBI dbExecute dbWriteTable
 #' @export
 stage_to_temp <- function(dbcon, reference_table, novel_data) {
