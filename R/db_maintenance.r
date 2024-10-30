@@ -1,8 +1,8 @@
 #' Compare data for staging
 #'
 #' Compare new data with a corresponding existing database table prior to writing, to identify rows in the new data with keys which are not yet found in the existing data ("insert"), rows which are identical in all columns to rows in the existing data ("duplicate"), rows with existing key combination but different non-key values in the existing data ("update"), and rows in the existing data with key combinations which do not exist in the new data ("orphan")
-#' @param data_new A Data Frame containing the new data being staged
-#' @param data_old A Data Frame containing the existing data, for comparison
+#' @param data_old A reference data frame containing the existing data
+#' @param data_new A data frame containing the new data to be compared with the existing data
 #' @param key_columns A character vector of key columns used to distinguish "insert", "update", and "orphan" rows. Can be a primary key or natural key, depending on needs.
 #' @param insert Logical: do you want to check for new rows to insert? TRUE by default.
 #' @param update Logical: do you want to check for new rows to update? TRUE by default.
@@ -11,14 +11,18 @@
 #' @param return_all Logical: do you want to perform all comparisons (insert, update, orphan, duplicate)? Overrides previous logical parmeters. False by default.
 #' @return A list of dataframes containing rows corresponding to each comparison (insert, update, orphan, duplicate)
 #' @examples 
-#' comparison <- compare_for_staging(data_a, data_b, return_all = TRUE)
+#' 
+#' data_old = data.frame(id= 1:5, values = c("a", "b", "c", "d", "e"))
+#' data_new = data.frame(id = 3:7, values = c("d", "d", "f", "f", "g"))
+#' 
+#' comparison <- compare_for_staging(data_old, data_new, key_columns = c("id"), return_all = TRUE)
 #' data_to_insert = comparison$insert
 #' data_to_update = comparison$update
 #' data_orphans = comparison$orphan
 #' data_duplicates = comparison$duplicate
 #' @importFrom dplyr %>% bind_rows anti_join group_by_at count ungroup mutate filter select inner_join
 #' @export
-compare_for_staging = function(data_new, data_old, key_columns, insert=TRUE, update=TRUE, orphan=FALSE, duplicate=FALSE, return_all=FALSE){
+compare_for_staging = function(data_old, data_new, key_columns, insert=TRUE, update=TRUE, orphan=FALSE, duplicate=FALSE, return_all=FALSE){
 
   output = list()
   
@@ -91,9 +95,10 @@ compare_for_staging = function(data_new, data_old, key_columns, insert=TRUE, upd
 #' @param novel_data Data Frame of rows to be pushed to the database
 #' @return If successful transaction, the name of the temporary table holding the data.
 #' @examples 
-#' db_capture = tbl(dbcon, "capture")
+#' dbcon = HopToDB("ribbitr")
+#' db_capture = dplyr::tbl(dbcon, "capture")
 #' temp_capture_tbl = stage_to_temp(dbcon, db_capture, novel_capture)
-#' pointer = tbl(dbcon, temp_capture_tbl)
+#' pointer = dplyr::tbl(dbcon, temp_capture_tbl)
 #' rows_upsert(db_capture, pointer, by=capture_pkey, in_place=TRUE)
 #' @importFrom DBI dbExecute dbWriteTable
 #' @export
@@ -114,7 +119,7 @@ stage_to_temp <- function(dbcon, reference_table, novel_data) {
   
   # stop if novel columns found
   if (length(novel_columns) > 0) {
-    stop(paste0("The following columns were in novel data which are absent from reference_table ", table_name, ": ", novel_columns))
+    stop(paste0("The following columns were in novel data which are absent from reference_table ", table_name, ": ", paste(novel_columns, collapse=", ")))
   }
   
   # begin transaction

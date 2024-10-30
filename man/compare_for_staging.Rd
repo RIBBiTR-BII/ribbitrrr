@@ -5,8 +5,8 @@
 \title{Compare data for staging}
 \usage{
 compare_for_staging(
-  data_new,
   data_old,
+  data_new,
   key_columns,
   insert = TRUE,
   update = TRUE,
@@ -16,9 +16,9 @@ compare_for_staging(
 )
 }
 \arguments{
-\item{data_new}{A Data Frame containing the new data being staged}
+\item{data_old}{A reference data frame containing the existing data}
 
-\item{data_old}{A Data Frame containing the existing data, for comparison}
+\item{data_new}{A data frame containing the new data to be compared with the existing data}
 
 \item{key_columns}{A character vector of key columns used to distinguish "insert", "update", and "orphan" rows. Can be a primary key or natural key, depending on needs.}
 
@@ -39,7 +39,11 @@ A list of dataframes containing rows corresponding to each comparison (insert, u
 Compare new data with a corresponding existing database table prior to writing, to identify rows in the new data with keys which are not yet found in the existing data ("insert"), rows which are identical in all columns to rows in the existing data ("duplicate"), rows with existing key combination but different non-key values in the existing data ("update"), and rows in the existing data with key combinations which do not exist in the new data ("orphan")
 }
 \examples{
-comparison <- compare_for_staging(data_a, data_b, return_all = TRUE)
+
+data_old = data.frame(id= 1:5, values = c("a", "b", "c", "d", "e"))
+data_new = data.frame(id = 3:7, values = c("d", "d", "f", "f", "g"))
+
+comparison <- compare_for_staging(data_old, data_new, key_columns = c("id"), return_all = TRUE)
 data_to_insert = comparison$insert
 data_to_update = comparison$update
 data_orphans = comparison$orphan

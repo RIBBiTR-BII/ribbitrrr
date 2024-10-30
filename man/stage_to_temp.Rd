@@ -20,8 +20,9 @@ If successful transaction, the name of the temporary table holding the data.
 This function allows you to push new data to a temporary table of the same constraints/datatypes as the table you want to eventually push to, to make sure everything checks out. Once data is staged, it can be pushed (inserted, updated, upserted) to the corresponding database table using ____.
 }
 \examples{
-db_capture = tbl(dbcon, "capture")
+dbcon = HopToDB("ribbitr")
+db_capture = dplyr::tbl(dbcon, "capture")
 temp_capture_tbl = stage_to_temp(dbcon, db_capture, novel_capture)
-pointer = tbl(dbcon, temp_capture_tbl)
+pointer = dplyr::tbl(dbcon, temp_capture_tbl)
 rows_upsert(db_capture, pointer, by=capture_pkey, in_place=TRUE)
 }

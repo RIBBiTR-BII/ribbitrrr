@@ -42,11 +42,11 @@ HopToDB = function(prefix = NA, timezone = NULL) {
                      password = Sys.getenv(password),
                      timezone = timezone)
     cat("Success!\n")
+    return(dbcon)
   },
   error=function(cond) {
     message("\nUnable to connect: ", cond$message,  "\n")
   })
-  return(dbcon)
 }
 
 #' Table primary key
@@ -137,7 +137,7 @@ tbl_keys = function(tbl_name, metadata_columns) {
 tbl_link = function(tbl_name, metadata_columns, return_root=TRUE) {
   link = list()
   
-  fkey = tbl_fkey(tbl_name, metadata_columns)
+  fkey_list = tbl_fkey(tbl_name, metadata_columns)
   
   if (return_root) {
     tbl_root = tbl_parent = metadata_columns %>%
@@ -156,29 +156,27 @@ tbl_link = function(tbl_name, metadata_columns, return_root=TRUE) {
     
   parents = list()
   
-  fkey_list = list(unlist(fkey))  # working list for fkeys
-  
-  for (ff in fkey_list) {
-    pkey = ff # name change ~ point of view of referenced table
-    
-    # filter metadata columns for a column with pkey == fkey (requires unique pkey/fkey column names within database)
-    tbl_parent = metadata_columns %>%
-      filter(column_name == pkey,
-             key_type == "PK") %>%
-      select(table_schema, table_name) %>%
-      collect()
-    
-    # identify nkeys
-    nkey = tbl_nkey(tbl_parent$table_name, metadata_columns)
-    # identify fkeys
-    fkey = tbl_fkey(tbl_parent$table_name, metadata_columns)
-    # save all to parents list
-    parents[[tbl_parent$table_name]] = list(schema=tbl_parent$table_schema,
-                                            table=tbl_parent$table_name,
-                                            pkey=pkey,
-                                            nkey=nkey,
-                                            fkey=fkey)
-  }
+    for (ff in fkey_list) {
+      pkey = ff # name change ~ point of view of referenced table
+      
+      # filter metadata columns for a column with pkey == fkey (requires unique pkey/fkey column names within database)
+      tbl_parent = metadata_columns %>%
+        filter(column_name == pkey,
+               key_type == "PK") %>%
+        select(table_schema, table_name) %>%
+        collect()
+      
+      # identify nkeys
+      nkey = tbl_nkey(tbl_parent$table_name, metadata_columns)
+      # identify fkeys
+      fkey = tbl_fkey(tbl_parent$table_name, metadata_columns)
+      # save all to parents list
+      parents[[tbl_parent$table_name]] = list(schema=tbl_parent$table_schema,
+                                              table=tbl_parent$table_name,
+                                              pkey=pkey,
+                                              nkey=nkey,
+                                              fkey=fkey)
+    }
   link[["parents"]] = parents
   return(link)
 }
