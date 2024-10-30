@@ -7,7 +7,7 @@
 tbl_join(dbcon, link, tbl = NA, join = "left", by = "pkey", columns = NA)
 }
 \arguments{
-\item{dbcon}{database connection object from \link[DBI]{dbConnect} or \link[ribbitrrr]{HopToDB}}
+\item{dbcon}{database connection object from \link[DBI]{dbConnect} or \link[ribbitrrr]{hopToDB}}
 
 \item{link}{a link object generated from \link[ribbitrrr]{tbl_link} or \link[ribbitrrr]{tbl_chain}}
 

@@ -1,5 +1,5 @@
 
-#' HopToDB
+#' hopToDB
 #'
 #' A simple function to easily to the RIBBiTR (or another) remote database. The following database connection credentials must be saved to your local .Renviron file(see \link[DBI]{dbConnect}): dbname - the database name, host - the database host, port - the database port, user - your database username, password - your database password. Variables may be defined with an optional prefix seperated by and underscore (e.g. "ribbitr_dbname") to distinguish multiple connections.
 #' @param prefix an optional prefix (string) added to the front of connection credential variables to distinguish between sets of credentials.
@@ -19,13 +19,13 @@
 #' # ribbitr.password = "[PASSWORD]"
 #'
 #' # connect to your database with a single line of code
-#' dbcon <- HopToDB("ribbitr")
+#' dbcon <- hopToDB("ribbitr")
 #' @importFrom DBI dbConnect dbDriver dbListTables
 #' @importFrom RPostgres Postgres
 #' @importFrom stats na.omit
 #' @importFrom dplyr tbl
 #' @export
-HopToDB = function(prefix = NA, timezone = NULL) {
+hopToDB = function(prefix = NA, timezone = NULL) {
   dbname = paste(na.omit(c(prefix, "dbname")), collapse = ".")
   host = paste(na.omit(c(prefix, "host")), collapse = ".")
   port = paste(na.omit(c(prefix, "port")), collapse = ".")
@@ -49,6 +49,14 @@ HopToDB = function(prefix = NA, timezone = NULL) {
   })
 }
 
+#' @keywords internal
+check_ambig_table_name = function(tbl_name, mdc) {
+  schemas = unique(mdc %>% filter(table_name == "capture") %>% pull(table_schema))
+  if (length(schemas) > 1) {
+    stop(paste0("Multiple tables named '", tbl_name, "' found, in schemas: ", paste(schemas, collapse = ", "), ".\n\tResults are ambiguous. Try filtering metadata_columns to the schema of interest.\n"))
+  }
+}
+
 #' Table primary key
 #'
 #' Identify the primary key column(s) for a given table in the database metadata. A table's primary key caries a unique and not-null constraint, and is used to uniquely identify the rows in the table. There is only one primary key per table, usually (though not necessarily) single column.
@@ -60,6 +68,8 @@ HopToDB = function(prefix = NA, timezone = NULL) {
 #' @importFrom dplyr %>% filter pull
 #' @export
 tbl_pkey = function(tbl_name, metadata_columns) {
+  check_ambig_table_name(tbl_name, metadata_columns)
+
   metadata_columns %>%
     filter(table_name == tbl_name,
            key_type == "PK") %>%
@@ -77,6 +87,7 @@ tbl_pkey = function(tbl_name, metadata_columns) {
 #' @importFrom dplyr %>% filter pull
 #' @export
 tbl_fkey = function(tbl_name, metadata_columns) {
+  check_ambig_table_name(tbl_name, metadata_columns)
   metadata_columns %>%
     filter(table_name == tbl_name,
            key_type == "FK") %>%
@@ -94,6 +105,7 @@ tbl_fkey = function(tbl_name, metadata_columns) {
 #' @importFrom dplyr %>% filter pull
 #' @export
 tbl_nkey = function(tbl_name, metadata_columns) {
+  check_ambig_table_name(tbl_name, metadata_columns)
   metadata_columns %>%
     filter(table_name == tbl_name,
            natural_key) %>%
@@ -110,7 +122,7 @@ tbl_nkey = function(tbl_name, metadata_columns) {
 #' survey_keys <- tbl_keys('survey', mdc)
 #'
 #' # collect table with all key columns from DB
-#' dbcon = HopToDB("ribbitr")
+#' dbcon = hopToDB("ribbitr")
 #' db_survey <- dbplyr::tbl(dbcon, "survey") %>%
 #'                 select(all_of(survey_keys)) %>%
 #'                 collect()
@@ -141,7 +153,8 @@ tbl_link = function(tbl_name, metadata_columns, return_root=TRUE) {
   fkey_list = tbl_fkey(tbl_name, metadata_columns)
 
   if (return_root) {
-    tbl_root = tbl_parent = metadata_columns %>%
+    # pull root info
+    tbl_root = metadata_columns %>%
       filter(table_name == tbl_name,
              key_type == "PK") %>%
       select(table_schema, column_name) %>%
@@ -197,7 +210,20 @@ tbl_chain = function(tbl_name, metadata_columns, until=NA) {
   chain = list()
   tbl_list = list(tbl_name)  # list of tables yet to search
   tbl_remaining = TRUE
-  return_root = TRUE  # init as true
+
+  # pull root info
+  tbl_root = metadata_columns %>%
+    filter(table_name == tbl_name,
+           key_type == "PK") %>%
+    select(table_schema, column_name) %>%
+    collect()
+
+  # record initial table as "root"
+  chain$root = list(schema = tbl_root$table_schema,
+                    table = tbl_name,
+                    pkey = tbl_root$column_name,
+                    nkey = tbl_nkey(tbl_name, metadata_columns),
+                    fkey = tbl_fkey(tbl_name, metadata_columns))
 
   # nest in list if not already
   until = list(unlist(until))
@@ -210,12 +236,7 @@ tbl_chain = function(tbl_name, metadata_columns, until=NA) {
     tbl_list[[1]] = NULL
 
     # lookup active table
-    link_active = tbl_link(tbl_active, metadata_columns, return_root=return_root)
-
-    if (return_root) {
-      chain$root = link_active$root
-      return_root = FALSE
-    }
+    link_active = tbl_link(tbl_active, metadata_columns, return_root=FALSE)
 
     # for each reference table found
     if (length(link_active$parents) > 0) {
@@ -240,7 +261,7 @@ tbl_chain = function(tbl_name, metadata_columns, until=NA) {
 #' Join table with reference tables
 #'
 #' Recursively join linked database tables following provided link object. Only primary, natural, and foreign key columns are joined by default. Specify additional columns to include in "columns"
-#' @param dbcon database connection object from \link[DBI]{dbConnect} or \link[ribbitrrr]{HopToDB}
+#' @param dbcon database connection object from \link[DBI]{dbConnect} or \link[ribbitrrr]{hopToDB}
 #' @param link a link object generated from \link[ribbitrrr]{tbl_link} or \link[ribbitrrr]{tbl_chain}
 #' @param tbl A lazy table object from \link[dplyr]{tbl} corresponding to the root table in the provided link object (optional). If not provided, link object root table will be pulled in its entirity. Passing your own table allows you to filter or select specific columns prior to joining, thereby avoiding pulling nonessential data. Be sure to minimally include essential columns: fkeys, and nkeys or pkeys depending on "by".
 #' @param join Type of join to be executed ("left", "inner", "full", or "right")

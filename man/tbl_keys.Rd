@@ -21,7 +21,7 @@ Identify primary, foreign, and natural key columns for a given table.
 survey_keys <- tbl_keys('survey', mdc)
 
 # collect table with all key columns from DB
-dbcon = HopToDB("ribbitr")
+dbcon = hopToDB("ribbitr")
 db_survey <- dbplyr::tbl(dbcon, "survey") \%>\%
                 select(all_of(survey_keys)) \%>\%
                 collect()
