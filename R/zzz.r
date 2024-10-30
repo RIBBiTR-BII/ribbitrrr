@@ -6,7 +6,7 @@
 check_package_version <- function() {
   # Get current installed version
   current_version <- packageVersion("ribbitrrr")
-  # message("Current version: ", current_version)
+  message("Current version: ", current_version)
 
   # Try to fetch latest version from GitHub
   tryCatch({
@@ -15,12 +15,12 @@ check_package_version <- function() {
     response <- httr::GET(desc_url)
     httr::stop_for_status(response)
     desc_content <- httr::content(response, "text", encoding = "UTF-8")
-    # message("Successfully fetched DESCRIPTION file")
+    message("Successfully fetched DESCRIPTION file")
 
     # Extract version line
     version_line <- grep("^Version:", strsplit(desc_content, "\n")[[1]], value = TRUE)
     latest_version <- gsub("^Version:\\s*", "", version_line)
-    # message("Latest version: ", latest_version)
+    message("Latest version: ", latest_version)
 
     # Compare versions
     if (package_version(latest_version) > current_version) {
@@ -35,14 +35,14 @@ check_package_version <- function() {
     }
     return(message)
   }, error = function(e) {
-    # warning("Error checking version: ", conditionMessage(e))
+    warning("Error checking version: ", conditionMessage(e))
     return(NULL)
   })
 }
 
 #' @keywords internal
 .onLoad <- function(libname, pkgname) {
-  # message(".onLoad function called")
+  message(".onLoad function called")
   # Perform the version check during package loading
   update_message <- check_package_version()
   # Store the message for later use in .onAttach
@@ -51,7 +51,7 @@ check_package_version <- function() {
 
 #' @keywords internal
 .onAttach <- function(libname, pkgname) {
-  # message(".onAttach function called")
+  message(".onAttach function called")
   # Display the update message, if any
   update_message <- getOption("ribbitrrr_update_message")
   if (!is.null(update_message)) {
