@@ -6,18 +6,18 @@
 #' @param timezone an optional timezone parameter to help convert data from various timezones to your local time.
 #' @return database connection object, to be passed to other functions (e.g. \link[DBI]{dbListTables}, \link[dplyr]{tbl}, etc.).
 #' @examples
-#' 
+#'
 #' ## open your local .Renviron file
 #' # usethis::edit_r_environ
 
 #' ## copy the following to .Renviron, replacing corresponding database credentials
-#' 
+#'
 #' # ribbitr.dbname = "[DATABASE_NAME]"
 #' # ribbitr.host = "[DATABASE_HOST]"
 #' # ribbitr.port = "[DATABASE_PORT]"
 #' # ribbitr.user = "[USERNAME]"
 #' # ribbitr.password = "[PASSWORD]"
-#' 
+#'
 #' # connect to your database with a single line of code
 #' dbcon <- HopToDB("ribbitr")
 #' @importFrom DBI dbConnect dbDriver dbListTables
@@ -31,7 +31,7 @@ HopToDB = function(prefix = NA, timezone = NULL) {
   port = paste(na.omit(c(prefix, "port")), collapse = ".")
   user = paste(na.omit(c(prefix, "user")), collapse = ".")
   password = paste(na.omit(c(prefix, "password")), collapse = ".")
-  
+
   tryCatch({
     cat("Connecting to database... ")
     dbcon <- dbConnect(dbDriver("Postgres"),
@@ -55,7 +55,7 @@ HopToDB = function(prefix = NA, timezone = NULL) {
 #' @param tbl_name The name of the table of interest (string)
 #' @param metadata_columns Column metadata containing the table of interest (Data Frame)
 #' @return The name(s) of the columns comprising the primary key for the table provided.
-#' @examples 
+#' @examples
 #' survey_pkey <- tbl_pkey('survey', mdc)
 #' @importFrom dplyr %>% filter pull
 #' @export
@@ -72,7 +72,7 @@ tbl_pkey = function(tbl_name, metadata_columns) {
 #' @param tbl_name The name of the table of interest (string)
 #' @param metadata_columns Column metadata containing the table of interest (Data Frame)
 #' @return The name(s) of the columns with foreign key status in the table provided
-#' @examples 
+#' @examples
 #' survey_fkey <- tbl_fkey('survey', mdc)
 #' @importFrom dplyr %>% filter pull
 #' @export
@@ -89,7 +89,7 @@ tbl_fkey = function(tbl_name, metadata_columns) {
 #' @param tbl_name The name of the table of interest (string)
 #' @param metadata_columns Column metadata containing the table of interest (Data Frame)
 #' @return The name(s) of the columns with natural key status in the table provided
-#' @examples 
+#' @examples
 #' survey_nkey <- tbl_nkey('survey', mdc)
 #' @importFrom dplyr %>% filter pull
 #' @export
@@ -106,9 +106,9 @@ tbl_nkey = function(tbl_name, metadata_columns) {
 #' @param tbl_name The name of the table of interest (string)
 #' @param metadata_columns Column metadata containing the table of interest (Data Frame)
 #' @return The unique name(s) of the columns with primary, foreign, or natural key status in the table provided. If a column has multiple statuses, it will show up only once.
-#' @examples 
+#' @examples
 #' survey_keys <- tbl_keys('survey', mdc)
-#' 
+#'
 #' # collect table with all key columns from DB
 #' dbcon = HopToDB("ribbitr")
 #' db_survey <- dbplyr::tbl(dbcon, "survey") %>%
@@ -130,43 +130,43 @@ tbl_keys = function(tbl_name, metadata_columns) {
 #' @param metadata_columns Column metadata containing the table of interest (Data Frame)
 #' @param return_root Do you want to return info on tbl_name as "root" in the link object (TRUE by default, set to false when not needed for faster runtime)
 #' @return Returns a link object listing referenced tables and their attributes
-#' @examples 
-#' 
+#' @examples
+#'
 #' capture_link = tbl_link("capture", mdc)
 #' @importFrom dplyr %>% filter select collect
 #' @export
 tbl_link = function(tbl_name, metadata_columns, return_root=TRUE) {
   link = list()
-  
+
   fkey_list = tbl_fkey(tbl_name, metadata_columns)
-  
+
   if (return_root) {
     tbl_root = tbl_parent = metadata_columns %>%
       filter(table_name == tbl_name,
              key_type == "PK") %>%
       select(table_schema, column_name) %>%
       collect()
-    
+
     # record initial table as "root"
     link$root = list(schema = tbl_root$table_schema,
                      table = tbl_name,
                      pkey = tbl_root$column_name,
                      nkey = tbl_nkey(tbl_name, metadata_columns),
-                     fkey = fkey)
+                     fkey = fkey_list)
   }
-    
+
   parents = list()
-  
+
     for (ff in fkey_list) {
       pkey = ff # name change ~ point of view of referenced table
-      
+
       # filter metadata columns for a column with pkey == fkey (requires unique pkey/fkey column names within database)
       tbl_parent = metadata_columns %>%
         filter(column_name == pkey,
                key_type == "PK") %>%
         select(table_schema, table_name) %>%
         collect()
-      
+
       # identify nkeys
       nkey = tbl_nkey(tbl_parent$table_name, metadata_columns)
       # identify fkeys
@@ -189,8 +189,8 @@ tbl_link = function(tbl_name, metadata_columns, return_root=TRUE) {
 #' @param metadata_columns Column metadata containing the table of interest (Data Frame)
 #' @param until Name(s) of table(s) beyond which you do not want to continue link search (string or list of strings)
 #' @return Returns a link object (list of all encountered referenced tables and their attributes)
-#' @examples 
-#' 
+#' @examples
+#'
 #' capture_chain = tbl_chain("capture", mdc, until=c("region"))
 #' @export
 tbl_chain = function(tbl_name, metadata_columns, until=NA) {
@@ -198,42 +198,42 @@ tbl_chain = function(tbl_name, metadata_columns, until=NA) {
   tbl_list = list(tbl_name)  # list of tables yet to search
   tbl_remaining = TRUE
   return_root = TRUE  # init as true
-  
+
   # nest in list if not already
   until = list(unlist(until))
-  
+
   # recursively execute tbl_link until tbl_list is exhausted
   while (tbl_remaining) {
-    
+
     # pop tbl_list
     tbl_active = tbl_list[[1]]
     tbl_list[[1]] = NULL
-    
+
     # lookup active table
     link_active = tbl_link(tbl_active, metadata_columns, return_root=return_root)
-    
+
     if (return_root) {
       chain$root = link_active$root
       return_root = FALSE
     }
-    
+
     # for each reference table found
     if (length(link_active$parents) > 0) {
       for (ll in link_active$parents) {
-        
+
         if (!(ll$table %in% until)) {
           # add to tbl_list, unless tbl is in "until"
           tbl_list <- append(tbl_list, ll$table)
         }
-        
+
         chain$parents[[ll$table]] = ll
       }
     }
-    
+
     # continue while loop?
     tbl_remaining = length(tbl_list)
   }
-  
+
   return(chain)
 }
 
@@ -247,25 +247,25 @@ tbl_chain = function(tbl_name, metadata_columns, until=NA) {
 #' @param by What columns to perform join on ("pkey" or "nkey")
 #' @param columns Additional columns to be included from joined tables (string or list of stings). Primary, natural, and foreign key columns are included by default.
 #' @return Returns a single lazy table object of all linked tables joined as specified
-#' @examples 
+#' @examples
 #' # generate link object
 #' capture_chain = tbl_chain("capture", mdc, until=c("region"))
-#' 
+#'
 #' # pre-filter root table (optional)
 #' tbl_capture = tbl(dbcon, Id("survey_data", "capture")) %>%
 #'   select(all_of(tbl_keys("capture", mdc)),
 #'        species_capture,
 #'        bd_swab_id) %>%
 #'   filter(!is.na(bd_swab_id))
-#' 
+#'
 #' # create and filter join table
 #' tbl_capture_brazil = tbl_join(dbcon, capture_chain, tbl=db_capture) %>%
 #'   filter(region == "brazil")
-#' 
+#'
 #' # collect (pull) data from database
 #' capture_brazil = tbl_capture_brazil %>%
 #'   collect()
-#' 
+#'
 #' @importFrom DBI Id
 #' @importFrom dplyr %>% tbl select any_of left_join full_join inner_join right_join
 #' @importFrom stats na.omit
@@ -283,7 +283,7 @@ tbl_join = function(dbcon, link, tbl=NA, join="left", by="pkey", columns=NA) {
       ))))))
     cat("done.\n")
   }
-  
+
   # for each parent in link object
   for (pp in link$parents) {
     # pull for
@@ -294,9 +294,9 @@ tbl_join = function(dbcon, link, tbl=NA, join="left", by="pkey", columns=NA) {
         pp$fkey,
         columns
       ))))))
-    
+
     cat("Joining with", pp$table, "... ")
-    
+
     if (join == "left") {
       tbl = tbl %>%
         left_join(tbl_next, by = c(pp[[by]]))
@@ -312,10 +312,10 @@ tbl_join = function(dbcon, link, tbl=NA, join="left", by="pkey", columns=NA) {
     } else {
       stop(join, " is not a valid join type... YET. Should it be included?")
     }
-    
+
     cat("done.\n")
-    
+
   }
-  
+
   return(tbl)
 }
