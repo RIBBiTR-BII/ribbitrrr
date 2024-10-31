@@ -28,12 +28,14 @@ check_package_version <- function() {
         "\nA newer version of ribbitrrr is available on GitHub (%s > %s).\n%s\n%s\n",
         latest_version, current_version,
         "Consider updating using:",
-        "remotes::install_github('RIBBiTR-BII/ribbitrrr')\n"
+        "remotes::install_github('RIBBiTR-BII/ribbitrrr')"
       )
+      message("Update message created: ", message)
+      return(message)
     } else {
-      message <- NULL
+      message("No update needed")
+      return(NULL)
     }
-    return(message)
   }, error = function(e) {
     warning("Error checking version: ", conditionMessage(e))
     return(NULL)
@@ -47,6 +49,7 @@ check_package_version <- function() {
   update_message <- check_package_version()
   # Store the message for later use in .onAttach
   options(ribbitrrr_update_message = update_message)
+  message("Update message stored: ", update_message)
 }
 
 #' @keywords internal
@@ -56,5 +59,8 @@ check_package_version <- function() {
   update_message <- getOption("ribbitrrr_update_message")
   if (!is.null(update_message)) {
     packageStartupMessage(update_message)
+    message("Update message displayed")
+  } else {
+    message("No update message to display")
   }
 }
