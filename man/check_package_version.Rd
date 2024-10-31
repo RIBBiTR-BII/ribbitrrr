@@ -4,7 +4,7 @@
 \alias{check_package_version}
 \title{Check package version against GitHub repository}
 \usage{
-check_package_version()
+check_package_version(display = FALSE)
 }
 \description{
 Check package version against GitHub repository

@@ -3,10 +3,12 @@
 #' @importFrom utils packageVersion installed.packages
 #' @importFrom httr GET content stop_for_status
 #' @keywords internal
-check_package_version <- function() {
+check_package_version <- function(display = FALSE) {
   # Get current installed version
   current_version <- packageVersion("ribbitrrr")
-  # message("Current version: ", current_version)
+  if (display) {
+    message("Current version: ", current_version)
+  }
 
   # Try to fetch latest version from GitHub
   tryCatch({
@@ -15,12 +17,15 @@ check_package_version <- function() {
     response <- httr::GET(desc_url)
     httr::stop_for_status(response)
     desc_content <- httr::content(response, "text", encoding = "UTF-8")
-    # message("Successfully fetched DESCRIPTION file")
-
+    if (display) {
+      message("Successfully fetched DESCRIPTION file")
+    }
     # Extract version line
     version_line <- grep("^Version:", strsplit(desc_content, "\n")[[1]], value = TRUE)
     latest_version <- gsub("^Version:\\s*", "", version_line)
-    # message("Latest version: ", latest_version)
+    if (display) {
+      message("Latest version: ", latest_version)
+    }
 
     # Compare versions
     if (package_version(latest_version) > current_version) {
@@ -30,14 +35,20 @@ check_package_version <- function() {
         "Consider updating using:",
         "remotes::install_github('RIBBiTR-BII/ribbitrrr')"
       )
-      # message("Update message created: ", message)
+      if (display) {
+        message("Update message created: ", message)
+      }
       return(message)
     } else {
-      # message("No update needed")
+      if (display) {
+        message("No update needed")
+      }
       return(NULL)
     }
   }, error = function(e) {
-    # warning("Error checking version: ", conditionMessage(e))
+    if (display) {
+      warning("Error checking version: ", conditionMessage(e))
+    }
     return(NULL)
   })
 }
@@ -64,4 +75,11 @@ check_package_version <- function() {
   } else {
     # message("No update message to display")
   }
+}
+
+#' Check for package updates
+#'
+#' @export
+check_ribbitrrr_update <- function() {
+  check_package_version(display = TRUE)
 }
