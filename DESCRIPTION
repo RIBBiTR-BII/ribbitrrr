@@ -1,6 +1,6 @@
 Package: ribbitrrr
 Title: RIBBiTR R Resources package
-Version: 0.0.1.0001
+Version: 0.0.1.0
 Authors@R: 
     person("Cob", "Staines", , "cobstainesconsulting@gmail.com", role = c("aut", "cre"),
            comment = c(ORCID = "0009-0003-1819-3621"))
@@ -21,4 +21,3 @@ Suggests:
 Config/testthat/edition: 3
 Depends: 
     R (>= 2.10)
-LazyData: true

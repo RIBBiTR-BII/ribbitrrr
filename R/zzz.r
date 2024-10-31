@@ -81,5 +81,5 @@ check_package_version <- function(display = FALSE) {
 #'
 #' @export
 check_ribbitrrr_update <- function() {
-  results = check_package_version(display = TRUE)
+  results = invisible(check_package_version(display = TRUE))
 }
