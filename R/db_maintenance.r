@@ -27,15 +27,17 @@ compare_for_staging = function(data_old, data_new, key_columns, insert=TRUE, upd
 
   output = list()
 
+  common_columns = intersect(colnames(data_old), colnames(data_new))
+
   # DUPLICATE: rows identical in both data_old and data_new
   # logic: find duplicate rows
   data_bind = bind_rows(data_new, data_old)
   data_duplicate = data_bind[duplicated(data_bind),]
   if (duplicate || return_all){
     duplicate_new = data_duplicate %>%
-      inner_join(data_new, by=colnames(data_bind))
+      inner_join(data_new, by=colnames(common_columns))
     duplicate_old = data_duplicate %>%
-      inner_join(data_old, by=colnames(data_bind))
+      inner_join(data_old, by=colnames(common_columns))
 
     output[["duplicate"]] = duplicate_new
     output[["duplicate_old"]] = duplicate_old
