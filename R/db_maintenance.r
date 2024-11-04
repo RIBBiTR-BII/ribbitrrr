@@ -32,13 +32,13 @@ compare_for_staging = function(data_old, data_new, key_columns, insert=TRUE, upd
   data_bind = bind_rows(data_new, data_old)
   data_duplicate = data_bind[duplicated(data_bind),]
   if (duplicate || return_all){
-    duplicates_new = data_duplicates %>%
+    duplicate_new = data_duplicate %>%
       inner_join(data_new)
-    duplicates_old = data_duplicates %>%
+    duplicate_old = data_duplicate %>%
       inner_join(data_old)
 
-    output[["duplicate"]] = duplicates_new
-    output[["duplicate_old"]] = duplicates_old
+    output[["duplicate"]] = duplicate_new
+    output[["duplicate_old"]] = duplicate_old
   }
 
   # bind rows ignoring duplicates, tracking source
