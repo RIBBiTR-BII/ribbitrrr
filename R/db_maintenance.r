@@ -90,7 +90,8 @@ compare_for_staging = function(data_old, data_new, key_columns, insert=TRUE, upd
     output[["update_old"]] = data_update_old
   }
 
-  if (report) {
+  # report if called
+  if (!isFALSE(report)) {
     cat(report)
     for (nn in names(output)) {
       cat("\n\t", nn, "\t", nrow(output[[nn]]))
