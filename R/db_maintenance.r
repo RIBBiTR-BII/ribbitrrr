@@ -1,6 +1,6 @@
 #' Compare data for staging
 #'
-#' Compare new data with a corresponding existing database table prior to writing, to identify rows in the new data with keys which are not yet found in the existing data ("insert"), rows which are identical in all columns to rows in the existing data ("duplicate"), rows with existing key combination but different non-key values in the existing data ("update"), and rows in the existing data with key combinations which do not exist in the new data ("orphan")
+#' Compare new data with a corresponding existing database table prior to writing, to identify rows in the new data with keys which are not yet found in the existing data ("insert"), rows which are identical in all shared columns to rows in the existing data ("duplicate"), rows with existing key combination but different non-key values in the existing data ("update"), and rows in the existing data with key combinations which do not exist in the new data ("orphan")
 #' @param data_old A reference data frame containing the existing data
 #' @param data_new A data frame containing the new data to be compared with the existing data
 #' @param key_columns A character vector of key columns used to distinguish "insert", "update", and "orphan" rows. Can be a primary key or natural key, depending on needs.
@@ -35,9 +35,9 @@ compare_for_staging = function(data_old, data_new, key_columns, insert=TRUE, upd
   data_duplicate = data_bind[duplicated(data_bind),]
   if (duplicate || return_all){
     duplicate_new = data_duplicate %>%
-      inner_join(data_new, by=colnames(common_columns))
+      inner_join(data_new, by=common_columns)
     duplicate_old = data_duplicate %>%
-      inner_join(data_old, by=colnames(common_columns))
+      inner_join(data_old, by=common_columns)
 
     output[["duplicate"]] = duplicate_new
     output[["duplicate_old"]] = duplicate_old
