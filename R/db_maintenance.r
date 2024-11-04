@@ -33,9 +33,9 @@ compare_for_staging = function(data_old, data_new, key_columns, insert=TRUE, upd
   data_duplicate = data_bind[duplicated(data_bind),]
   if (duplicate || return_all){
     duplicate_new = data_duplicate %>%
-      inner_join(data_new)
+      inner_join(data_new, by=colnames(data_bind))
     duplicate_old = data_duplicate %>%
-      inner_join(data_old)
+      inner_join(data_old, by=colnames(data_bind))
 
     output[["duplicate"]] = duplicate_new
     output[["duplicate_old"]] = duplicate_old
