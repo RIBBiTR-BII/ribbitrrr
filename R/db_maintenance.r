@@ -9,12 +9,13 @@
 #' @param orphan Logical: do you want to check for orphan rows in the old data? FALSE by default.
 #' @param duplicate Logical: do you want to check for duplicate rows? FALSE by default.
 #' @param return_all Logical: do you want to perform all comparisons (insert, update, orphan, duplicate)? Overrides previous logical parmeters. False by default.
+#' @param report String name for report if desired. If provided, function will announce the lengths of all provided outputs.
 #' @return A list of dataframes containing rows corresponding to each comparison (insert, update, orphan, duplicate)
-#' @examples 
-#' 
+#' @examples
+#'
 #' data_old = data.frame(id= 1:5, values = c("a", "b", "c", "d", "e"))
 #' data_new = data.frame(id = 3:7, values = c("d", "d", "f", "f", "g"))
-#' 
+#'
 #' comparison <- compare_for_staging(data_old, data_new, key_columns = c("id"), return_all = TRUE)
 #' data_to_insert = comparison$insert
 #' data_to_update = comparison$update
@@ -22,10 +23,10 @@
 #' data_duplicates = comparison$duplicate
 #' @importFrom dplyr %>% bind_rows anti_join group_by_at count ungroup mutate filter select inner_join
 #' @export
-compare_for_staging = function(data_old, data_new, key_columns, insert=TRUE, update=TRUE, orphan=FALSE, duplicate=FALSE, return_all=FALSE){
+compare_for_staging = function(data_old, data_new, key_columns, insert=TRUE, update=TRUE, orphan=FALSE, duplicate=FALSE, return_all=FALSE, report=FALSE){
 
   output = list()
-  
+
   # DUPLICATE: rows identical in both data_old and data_new
   # logic: find duplicate rows
   data_bind = bind_rows(data_new, data_old)
@@ -33,22 +34,22 @@ compare_for_staging = function(data_old, data_new, key_columns, insert=TRUE, upd
   if (duplicate || return_all){
     output[["duplicate"]] = data_duplicate
   }
-  
+
   # bind rows ignoring duplicates, tracking source
   data_bind_uni = data_bind %>%
     anti_join(data_duplicate, by = key_columns)
-  
+
   # count grouped by key_columns (1 or 2)
   data_pkey_counts = data_bind_uni %>%
     group_by_at(key_columns) %>%
     count() %>%
     ungroup()
-  
+
   data_bind_source = bind_rows(data_new %>%
                                  mutate(d_source = "a"),
                                data_old %>%
                                  mutate(d_source = "b"))
-  
+
   # ORPHAN: rows from data_old with unique key_columns
   # logic: pkey compo found 1x in data_bind, from data_old
   if (orphan || return_all){
@@ -56,10 +57,10 @@ compare_for_staging = function(data_old, data_new, key_columns, insert=TRUE, upd
       filter(n == 1) %>%
       select(-n) %>%
       inner_join(data_old, by=key_columns)
-    
+
     output[["orphan"]] = data_orphan
   }
-  
+
   # INSERT: rows from data_new with unique keys columns
   # logic: pkey combo found 1x in data_bind, from data_new
   if (insert || return_all){
@@ -67,23 +68,36 @@ compare_for_staging = function(data_old, data_new, key_columns, insert=TRUE, upd
       filter(n == 1) %>%
       select(-n) %>%
       inner_join(data_new, by=key_columns)
-    
+
     output[["insert"]] = data_insert
   }
-  
-  
+
+
   # UPDATE: rows from data_new with key-column combination found in data_old, but with distinctions among non-key columns
   # logic: pkey combo found 2x in data_bind, is distinct among non-pkey columns
   if (update || return_all){
-    data_update = data_pkey_counts %>%
+    data_update_keys = data_pkey_counts %>%
       filter(n == 2) %>%
-      select(-n) %>%
+      select(-n)
+
+    data_update_new = data_update_keys %>%
       inner_join(data_new, by=key_columns)
-    
-    output[["update"]] = data_update
+
+    data_update_old = data_update_keys %>%
+      inner_join(data_old, by=key_columns)
+
+    output[["update"]] = data_update_new
+    output[["update_old"]] = data_update_old
   }
-  
-  
+
+  if (report) {
+    cat(report)
+    for (nn in names(output)) {
+      cat("\n\t", nn, "\t", nrow(output[[nn]]))
+    }
+    cat("\n")
+  }
+
   return(output)
 }
 
@@ -94,7 +108,7 @@ compare_for_staging = function(data_old, data_new, key_columns, insert=TRUE, upd
 #' @param reference_table A lazy table object pointing to the database table which you want to push data to.
 #' @param novel_data Data Frame of rows to be pushed to the database
 #' @return If successful transaction, the name of the temporary table holding the data.
-#' @examples 
+#' @examples
 #' if(FALSE) {
 #'   dbcon = HopToDB("ribbitr")
 #'   db_capture = dplyr::tbl(dbcon, "capture")
@@ -109,23 +123,23 @@ stage_to_temp <- function(dbcon, reference_table, novel_data) {
   ref_cols = colnames(reference_table)
   nov_cols = colnames(novel_data)
 
-  
+
   # build meaningful temp table name: [schema].[reference_table]_temp
   table_path = as.character(reference_table$lazy_query$x)
   path_parts = strsplit(gsub("\"", "", table_path), "\\.")
   schema_name = path_parts[[1]][1]
   table_name = path_parts[[1]][2]
   temp_table_name = paste0(schema_name, "_", table_name, "_temp")
-  
+
   novel_columns = setdiff(nov_cols, ref_cols)
-  
+
   # stop if novel columns found
   if (length(novel_columns) > 0) {
     stop(paste0("The following columns were in novel data which are absent from reference_table ", table_name, ": ", paste(novel_columns, collapse=", ")))
   }
-  
+
   # begin transaction
-  
+
   # drop temp table if exists
   suppressMessages(
     dbExecute(dbcon, paste0("DROP TABLE IF EXISTS ", temp_table_name, ";"))
@@ -141,7 +155,7 @@ stage_to_temp <- function(dbcon, reference_table, novel_data) {
   }
   # write all novel data to temp table
   dbWriteTable(dbcon, name = temp_table_name, value = novel_data, append = TRUE)
-  
-  
+
+
   return(temp_table_name)
 }

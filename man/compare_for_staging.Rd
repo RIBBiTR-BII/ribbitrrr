@@ -12,7 +12,8 @@ compare_for_staging(
   update = TRUE,
   orphan = FALSE,
   duplicate = FALSE,
-  return_all = FALSE
+  return_all = FALSE,
+  report = FALSE
 )
 }
 \arguments{
@@ -31,6 +32,8 @@ compare_for_staging(
 \item{duplicate}{Logical: do you want to check for duplicate rows? FALSE by default.}
 
 \item{return_all}{Logical: do you want to perform all comparisons (insert, update, orphan, duplicate)? Overrides previous logical parmeters. False by default.}
+
+\item{report}{String name for report if desired. If provided, function will announce the lengths of all provided outputs.}
 }
 \value{
 A list of dataframes containing rows corresponding to each comparison (insert, update, orphan, duplicate)
