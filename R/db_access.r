@@ -266,7 +266,7 @@ tbl_chain = function(tbl_name, metadata_columns, until=NA) {
 #' @param tbl A lazy table object from \link[dplyr]{tbl} corresponding to the root table in the provided link object (optional). If not provided, link object root table will be pulled in its entirity. Passing your own table allows you to filter or select specific columns prior to joining, thereby avoiding pulling nonessential data. Be sure to minimally include essential columns: fkeys, and nkeys or pkeys depending on "by".
 #' @param join Type of join to be executed ("left", "inner", "full", or "right")
 #' @param by What columns to perform join on ("pkey" or "nkey")
-#' @param columns Additional columns to be included from joined tables (string or list of stings). Primary, natural, and foreign key columns are included by default.
+#' @param columns Additional columns to be included from joined tables (string or list of stings). Primary, natural, and foreign key columns are included by default. Set to "all" to include all columns.
 #' @return Returns a single lazy table object of all linked tables joined as specified
 #' @examples
 #' # generate link object
@@ -295,26 +295,36 @@ tbl_join = function(dbcon, link, tbl=NA, join="left", by="pkey", columns=NA) {
   # load table if not provided
   if (is.na(tbl)[[1]]) {
     cat("Pulling", link$root$table, "... ")
-    tbl = tbl(dbcon, Id(link$root$schema, link$root$table)) %>%
-      select(any_of(na.omit(unique(unlist(c(
-        link$root$pkey,
-        link$root$nkey,
-        link$root$fkey,
-        columns
-      ))))))
+    tbl = tbl(dbcon, Id(link$root$schema, link$root$table))
+
+    # select for columns
+    if (columns != "all") {
+      tbl = tbl %>%
+        select(any_of(na.omit(unique(unlist(c(
+          link$root$pkey,
+          link$root$nkey,
+          link$root$fkey,
+          columns
+        ))))))
+    }
+
     cat("done.\n")
   }
 
   # for each parent in link object
   for (pp in link$parents) {
     # pull for
-    tbl_next = tbl(dbcon, Id(pp$schema, pp$table)) %>%
-      select(any_of(na.omit(unique(unlist(c(
-        pp$pkey,
-        pp$nkey,
-        pp$fkey,
-        columns
-      ))))))
+    tbl_next = tbl(dbcon, Id(pp$schema, pp$table))
+
+    if (columns != "all") {
+      tbl_next = tbl_next %>%
+        select(any_of(na.omit(unique(unlist(c(
+          pp$pkey,
+          pp$nkey,
+          pp$fkey,
+          columns
+        ))))))
+    }
 
     cat("Joining with", pp$table, "... ")
 
