@@ -64,6 +64,12 @@ check_ambig_table_name = function(tbl_name, mdc) {
 #' @param metadata_columns Column metadata containing the table of interest (Data Frame)
 #' @return The name(s) of the columns comprising the primary key for the table provided.
 #' @examples
+#' dbcon <- hopToDB("ribbitr")
+#'
+#' mdc <- tbl(dbcon, Id("public", "all_columns")) %>%
+#'             filter(table_schema == "survey_data") %>%
+#'             collect()
+#'
 #' survey_pkey <- tbl_pkey('survey', mdc)
 #' @importFrom dplyr %>% filter pull
 #' @export
@@ -72,7 +78,7 @@ tbl_pkey = function(tbl_name, metadata_columns) {
 
   metadata_columns %>%
     filter(table_name == tbl_name,
-           key_type == "PK") %>%
+           key_type == "PK" | key_type == "PF") %>%
     pull("column_name")
 }
 
@@ -83,6 +89,12 @@ tbl_pkey = function(tbl_name, metadata_columns) {
 #' @param metadata_columns Column metadata containing the table of interest (Data Frame)
 #' @return The name(s) of the columns with foreign key status in the table provided
 #' @examples
+#' dbcon <- hopToDB("ribbitr")
+#'
+#' mdc <- tbl(dbcon, Id("public", "all_columns")) %>%
+#'             filter(table_schema = ="survey_data") %>%
+#'             collect()
+#'
 #' survey_fkey <- tbl_fkey('survey', mdc)
 #' @importFrom dplyr %>% filter pull
 #' @export
@@ -90,7 +102,7 @@ tbl_fkey = function(tbl_name, metadata_columns) {
   check_ambig_table_name(tbl_name, metadata_columns)
   metadata_columns %>%
     filter(table_name == tbl_name,
-           key_type == "FK") %>%
+           key_type == "FK" | key_type == "PF") %>%
     pull("column_name")
 }
 
@@ -101,6 +113,12 @@ tbl_fkey = function(tbl_name, metadata_columns) {
 #' @param metadata_columns Column metadata containing the table of interest (Data Frame)
 #' @return The name(s) of the columns with natural key status in the table provided
 #' @examples
+#' dbcon <- hopToDB("ribbitr")
+#'
+#' mdc <- tbl(dbcon, Id("public", "all_columns")) %>%
+#'             filter(table_schema == "survey_data") %>%
+#'             collect()
+#'
 #' survey_nkey <- tbl_nkey('survey', mdc)
 #' @importFrom dplyr %>% filter pull
 #' @export
@@ -119,11 +137,16 @@ tbl_nkey = function(tbl_name, metadata_columns) {
 #' @param metadata_columns Column metadata containing the table of interest (Data Frame)
 #' @return The unique name(s) of the columns with primary, foreign, or natural key status in the table provided. If a column has multiple statuses, it will show up only once.
 #' @examples
+#' dbcon <- hopToDB("ribbitr")
+#'
+#' mdc <- tbl(dbcon, Id("public", "all_columns")) %>%
+#'             filter(table_schema == "survey_data") %>%
+#'             collect()
+#'
 #' survey_keys <- tbl_keys('survey', mdc)
 #'
 #' # collect table with all key columns from DB
-#' dbcon = hopToDB("ribbitr")
-#' db_survey <- dbplyr::tbl(dbcon, "survey") %>%
+#' db_survey <- tbl(dbcon, "survey") %>%
 #'                 select(all_of(survey_keys)) %>%
 #'                 collect()
 #' @export
@@ -292,6 +315,10 @@ tbl_chain = function(tbl_name, metadata_columns, until=NA) {
 #' @importFrom stats na.omit
 #' @export
 tbl_join = function(dbcon, link, tbl=NA, join="left", by="pkey", columns=NA) {
+  if (is.na(columns)) {
+    columns = c()
+  }
+
   # load table if not provided
   if (is.na(tbl)[[1]]) {
     cat("Pulling", link$root$table, "... ")

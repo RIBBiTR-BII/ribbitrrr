@@ -18,5 +18,11 @@ The name(s) of the columns comprising the primary key for the table provided.
 Identify the primary key column(s) for a given table in the database metadata. A table's primary key caries a unique and not-null constraint, and is used to uniquely identify the rows in the table. There is only one primary key per table, usually (though not necessarily) single column.
 }
 \examples{
+dbcon <- hopToDB("ribbitr")
+
+mdc <- tbl(dbcon, Id("public", "all_columns")) \%>\%
+            filter(table_schema == "survey_data") \%>\%
+            collect()
+
 survey_pkey <- tbl_pkey('survey', mdc)
 }

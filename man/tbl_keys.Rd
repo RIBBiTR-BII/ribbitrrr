@@ -18,11 +18,16 @@ The unique name(s) of the columns with primary, foreign, or natural key status i
 Identify primary, foreign, and natural key columns for a given table.
 }
 \examples{
+dbcon <- hopToDB("ribbitr")
+
+mdc <- tbl(dbcon, Id("public", "all_columns")) \%>\%
+            filter(table_schema == "survey_data") \%>\%
+            collect()
+
 survey_keys <- tbl_keys('survey', mdc)
 
 # collect table with all key columns from DB
-dbcon = hopToDB("ribbitr")
-db_survey <- dbplyr::tbl(dbcon, "survey") \%>\%
+db_survey <- tbl(dbcon, "survey") \%>\%
                 select(all_of(survey_keys)) \%>\%
                 collect()
 }

@@ -18,5 +18,11 @@ The name(s) of the columns with natural key status in the table provided
 Identify the natural key column(s) for a given table in the database metadata.  A natural key is comprised of the columns which naturally identify a given row, and which are generally used to generate ID columns used as primary keys. There is only one natural key per table, though it may be comprised of multiple columns (a "composite" key).
 }
 \examples{
+dbcon <- hopToDB("ribbitr")
+
+mdc <- tbl(dbcon, Id("public", "all_columns")) \%>\%
+            filter(table_schema == "survey_data") \%>\%
+            collect()
+
 survey_nkey <- tbl_nkey('survey', mdc)
 }

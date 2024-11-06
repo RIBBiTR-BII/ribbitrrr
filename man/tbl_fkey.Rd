@@ -18,5 +18,11 @@ The name(s) of the columns with foreign key status in the table provided
 Identify the foreign key column(s) for a given table in the database metadata. A foreign key points to and mirrors the primary key of another table, establishing relationships between tables. There may be multiple foreign keys in a given table, usually (though not necessarily) single column per key.
 }
 \examples{
+dbcon <- hopToDB("ribbitr")
+
+mdc <- tbl(dbcon, Id("public", "all_columns")) \%>\%
+            filter(table_schema = ="survey_data") \%>\%
+            collect()
+
 survey_fkey <- tbl_fkey('survey', mdc)
 }
