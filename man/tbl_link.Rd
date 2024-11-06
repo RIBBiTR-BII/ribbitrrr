@@ -20,6 +20,11 @@ Returns a link object listing referenced tables and their attributes
 For each foreign key in tbl_name, pull information on the associated reference table. To do this recursively use \link[ribbitrrr]{tbl_chain}
 }
 \examples{
+dbcon <- hopToDB("ribbitr")
+
+mdc <- tbl(dbcon, Id("public", "all_columns")) \%>\%
+            filter(table_schema == "survey_data") \%>\%
+            collect()
 
 capture_link = tbl_link("capture", mdc)
 }

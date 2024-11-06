@@ -26,19 +26,25 @@ Returns a single lazy table object of all linked tables joined as specified
 Recursively join linked database tables following provided link object. Only primary, natural, and foreign key columns are joined by default. Specify additional columns to include in "columns"
 }
 \examples{
+dbcon <- hopToDB("ribbitr")
+
+mdc <- tbl(dbcon, Id("survey_data", "metadata_columns")) \%>\%
+  filter(table_schema == "survey_data") \%>\%
+  collect()
+
 # generate link object
-capture_chain = tbl_chain("capture", mdc, until=c("region"))
+capture_chain = tbl_chain("capture", mdc)
 
 # pre-filter root table (optional)
-tbl_capture = tbl(dbcon, Id("survey_data", "capture")) \%>\%
+db_capture = tbl(dbcon, Id("survey_data", "capture")) \%>\%
   select(all_of(tbl_keys("capture", mdc)),
-       species_capture,
-       bd_swab_id) \%>\%
+         species_capture,
+         bd_swab_id) \%>\%
   filter(!is.na(bd_swab_id))
 
 # create and filter join table
 tbl_capture_brazil = tbl_join(dbcon, capture_chain, tbl=db_capture) \%>\%
-  filter(region == "brazil")
+  filter(location == "brazil")
 
 # collect (pull) data from database
 capture_brazil = tbl_capture_brazil \%>\%

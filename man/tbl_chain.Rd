@@ -20,6 +20,11 @@ Returns a link object (list of all encountered referenced tables and their attri
 For each foreign key in tbl_name, pull information on the associated reference table. Do the same for any foreign keys found in this reference table, and so on. Stops when table network is exausted. Does not search beyond any tables listed in "until". To identify one iteration of reference tables, use \link[ribbitrrr]{tbl_link}.
 }
 \examples{
+dbcon <- hopToDB("ribbitr")
+
+mdc <- tbl(dbcon, Id("public", "all_columns")) \%>\%
+            filter(table_schema == "survey_data") \%>\%
+            collect()
 
 capture_chain = tbl_chain("capture", mdc, until=c("region"))
 }

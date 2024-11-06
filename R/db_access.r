@@ -166,6 +166,11 @@ tbl_keys = function(tbl_name, metadata_columns) {
 #' @param return_root Do you want to return info on tbl_name as "root" in the link object (TRUE by default, set to false when not needed for faster runtime)
 #' @return Returns a link object listing referenced tables and their attributes
 #' @examples
+#' dbcon <- hopToDB("ribbitr")
+#'
+#' mdc <- tbl(dbcon, Id("public", "all_columns")) %>%
+#'             filter(table_schema == "survey_data") %>%
+#'             collect()
 #'
 #' capture_link = tbl_link("capture", mdc)
 #' @importFrom dplyr %>% filter select collect
@@ -226,6 +231,11 @@ tbl_link = function(tbl_name, metadata_columns, return_root=TRUE) {
 #' @param until Name(s) of table(s) beyond which you do not want to continue link search (string or list of strings)
 #' @return Returns a link object (list of all encountered referenced tables and their attributes)
 #' @examples
+#' dbcon <- hopToDB("ribbitr")
+#'
+#' mdc <- tbl(dbcon, Id("public", "all_columns")) %>%
+#'             filter(table_schema == "survey_data") %>%
+#'             collect()
 #'
 #' capture_chain = tbl_chain("capture", mdc, until=c("region"))
 #' @export
@@ -292,19 +302,25 @@ tbl_chain = function(tbl_name, metadata_columns, until=NA) {
 #' @param columns Additional columns to be included from joined tables (string or list of stings). Primary, natural, and foreign key columns are included by default. Set to "all" to include all columns.
 #' @return Returns a single lazy table object of all linked tables joined as specified
 #' @examples
+#' dbcon <- hopToDB("ribbitr")
+#'
+#' mdc <- tbl(dbcon, Id("survey_data", "metadata_columns")) %>%
+#'   filter(table_schema == "survey_data") %>%
+#'   collect()
+#'
 #' # generate link object
-#' capture_chain = tbl_chain("capture", mdc, until=c("region"))
+#' capture_chain = tbl_chain("capture", mdc)
 #'
 #' # pre-filter root table (optional)
-#' tbl_capture = tbl(dbcon, Id("survey_data", "capture")) %>%
+#' db_capture = tbl(dbcon, Id("survey_data", "capture")) %>%
 #'   select(all_of(tbl_keys("capture", mdc)),
-#'        species_capture,
-#'        bd_swab_id) %>%
+#'          species_capture,
+#'          bd_swab_id) %>%
 #'   filter(!is.na(bd_swab_id))
 #'
 #' # create and filter join table
 #' tbl_capture_brazil = tbl_join(dbcon, capture_chain, tbl=db_capture) %>%
-#'   filter(region == "brazil")
+#'   filter(location == "brazil")
 #'
 #' # collect (pull) data from database
 #' capture_brazil = tbl_capture_brazil %>%
@@ -315,8 +331,14 @@ tbl_chain = function(tbl_name, metadata_columns, until=NA) {
 #' @importFrom stats na.omit
 #' @export
 tbl_join = function(dbcon, link, tbl=NA, join="left", by="pkey", columns=NA) {
+
   if (is.na(columns)) {
-    columns = c()
+    select_columns = TRUE
+  } else if (columns == "all") {
+    select_columns = FALSE
+    columns = NA
+  } else {
+    select_columns = TRUE
   }
 
   # load table if not provided
@@ -325,7 +347,7 @@ tbl_join = function(dbcon, link, tbl=NA, join="left", by="pkey", columns=NA) {
     tbl = tbl(dbcon, Id(link$root$schema, link$root$table))
 
     # select for columns
-    if (columns != "all") {
+    if (select_columns) {
       tbl = tbl %>%
         select(any_of(na.omit(unique(unlist(c(
           link$root$pkey,
@@ -343,7 +365,7 @@ tbl_join = function(dbcon, link, tbl=NA, join="left", by="pkey", columns=NA) {
     # pull for
     tbl_next = tbl(dbcon, Id(pp$schema, pp$table))
 
-    if (columns != "all") {
+    if (select_columns) {
       tbl_next = tbl_next %>%
         select(any_of(na.omit(unique(unlist(c(
           pp$pkey,
