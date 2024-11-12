@@ -8,6 +8,10 @@
 - tbl_full_join()
 - tbl_right_join()
 
+### Changed
+
+- tbl_pkey & tbl_fkey now query using mdc binary primary_key and foreign_key columns
+
 ## [0.0.1.1] - 2024-11-06
 ### Added
 

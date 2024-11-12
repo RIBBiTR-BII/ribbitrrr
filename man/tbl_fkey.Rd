@@ -21,7 +21,7 @@ Identify the foreign key column(s) for a given table in the database metadata. A
 dbcon <- hopToDB("ribbitr")
 
 mdc <- tbl(dbcon, Id("public", "all_columns")) \%>\%
-            filter(table_schema = ="survey_data") \%>\%
+            filter(table_schema =="survey_data") \%>\%
             collect()
 
 survey_fkey <- tbl_fkey('survey', mdc)

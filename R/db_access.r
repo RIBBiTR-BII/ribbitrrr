@@ -78,7 +78,7 @@ tbl_pkey = function(tbl_name, metadata_columns) {
 
   metadata_columns %>%
     filter(table_name == tbl_name,
-           key_type == "PK" | key_type == "PF") %>%
+           primary_key) %>%
     pull("column_name")
 }
 
@@ -92,7 +92,7 @@ tbl_pkey = function(tbl_name, metadata_columns) {
 #' dbcon <- hopToDB("ribbitr")
 #'
 #' mdc <- tbl(dbcon, Id("public", "all_columns")) %>%
-#'             filter(table_schema = ="survey_data") %>%
+#'             filter(table_schema =="survey_data") %>%
 #'             collect()
 #'
 #' survey_fkey <- tbl_fkey('survey', mdc)
@@ -102,7 +102,7 @@ tbl_fkey = function(tbl_name, metadata_columns) {
   check_ambig_table_name(tbl_name, metadata_columns)
   metadata_columns %>%
     filter(table_name == tbl_name,
-           key_type == "FK" | key_type == "PF") %>%
+           foreign_key) %>%
     pull("column_name")
 }
 
@@ -238,6 +238,7 @@ tbl_link = function(tbl_name, metadata_columns, return_root=TRUE) {
 #'             collect()
 #'
 #' capture_chain = tbl_chain("capture", mdc, until=c("region"))
+#' @importFrom dplyr %>% filter select collect
 #' @export
 tbl_chain = function(tbl_name, metadata_columns, until=NA) {
   chain = list()
