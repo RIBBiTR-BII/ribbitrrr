@@ -9,7 +9,7 @@
 #'
 #' ## open your local .Renviron file
 #' # usethis::edit_r_environ
-
+#'
 #' ## copy the following to .Renviron, replacing corresponding database credentials
 #'
 #' # ribbitr.dbname = "[DATABASE_NAME]"
@@ -18,8 +18,21 @@
 #' # ribbitr.user = "[USERNAME]"
 #' # ribbitr.password = "[PASSWORD]"
 #'
-#' # connect to your database with a single line of code
+#' ## connect to your database with a single line of code
 #' dbcon <- hopToDB("ribbitr")
+#'
+#' ## or for greater security
+#' ## copy the following to .Renviron, replacing corresponding database credentials and omitting user and/or password
+#'
+#' # ribbitr.dbname = "[DATABASE_NAME]"
+#' # ribbitr.host = "[DATABASE_HOST]"
+#' # ribbitr.port = "[DATABASE_PORT]"
+#'
+#' ## connect to your database with a single line of code
+#' dbcon <- hopToDB("ribbitr")
+#'
+#' # user is prompted for user an/or password
+#'
 #' @importFrom DBI dbConnect dbDriver dbListTables
 #' @importFrom RPostgres Postgres
 #' @importFrom stats na.omit
@@ -32,14 +45,44 @@ hopToDB = function(prefix = NA, timezone = NULL) {
   user = paste(na.omit(c(prefix, "user")), collapse = ".")
   password = paste(na.omit(c(prefix, "password")), collapse = ".")
 
+  # attempt to fetch user
+  tryCatch({
+    un = Sys.getenv(user)
+  },
+  error=function(e) {
+    if (!grepl("object 'user' not found", e$message)) {
+      message(e$message)
+    }
+  })
+
+  # attempt to fetch password
+  tryCatch({
+    pw = Sys.getenv(password)
+  },
+  error=function(e) {
+    if (!grepl("object 'password' not found", e$message)) {
+      message(e$message)
+    }
+  })
+
+
   tryCatch({
     cat("Connecting to database... ")
+
+    if (un == "") {
+      un = rstudioapi::askForPassword("username")
+    }
+
+    if (pw == "") {
+      pw = rstudioapi::askForPassword("password")
+    }
+
     dbcon <- dbConnect(dbDriver("Postgres"),
                      dbname = Sys.getenv(dbname),
                      host = Sys.getenv(host),
                      port = Sys.getenv(port),
-                     user = Sys.getenv(user),
-                     password = Sys.getenv(password),
+                     user = un,
+                     password = pw,
                      timezone = timezone)
     cat("Success!\n")
     return(dbcon)

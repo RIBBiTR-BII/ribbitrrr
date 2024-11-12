@@ -10,6 +10,7 @@
 
 ### Changed
 
+- user prompting for hopToDB() when user and/or password are not provided in .Renviron
 - tbl_pkey & tbl_fkey now query using mdc binary primary_key and foreign_key columns
 
 ## [0.0.1.1] - 2024-11-06
