@@ -291,7 +291,17 @@ tbl_chain = function(tbl_name, metadata_columns, until=NA) {
   return(chain)
 }
 
-#' Join table with reference tables
+#' Join tables with link object
+#'
+#' @description
+#' These functions provide a framework for automatically and recursively joining tables using link objects.
+#' Link objects are generated using \link[ribbitrrr]{tbl_link} or \link[ribbitrrr]{tbl_chain}.
+#'
+#' - `tbl_left_join()`: Left join tables in link object.
+#' - `tbl_inner_join()`: Inner join tables in link object.
+#' - `tbl_full_join()`: Full join tables in link object.
+#' - `tbl_right_join()`: Right join tables in link object.
+#' - `tbl_join()`: Generic join tables in link object (pass join type as parameter)
 #'
 #' Recursively join linked database tables following provided link object. Only primary, natural, and foreign key columns are joined by default. Specify additional columns to include in "columns"
 #' @param dbcon database connection object from \link[DBI]{dbConnect} or \link[ribbitrrr]{hopToDB}
@@ -329,6 +339,7 @@ tbl_chain = function(tbl_name, metadata_columns, until=NA) {
 #' @importFrom DBI Id
 #' @importFrom dplyr %>% tbl select any_of left_join full_join inner_join right_join
 #' @importFrom stats na.omit
+#' @aliases tbl_left_join tbl_inner_join tbl_full_join tbl_right_join tbl_join
 #' @export
 tbl_join = function(dbcon, link, tbl=NA, join="left", by="pkey", columns=NA) {
 
@@ -398,4 +409,156 @@ tbl_join = function(dbcon, link, tbl=NA, join="left", by="pkey", columns=NA) {
   }
 
   return(tbl)
+}
+
+#' Left join using link object
+#'
+#' Left join tables across a provided link object, generated using \link[ribbitrrr]{tbl_link} or \link[ribbitrrr]{tbl_chain}
+#' @param dbcon database connection object from \link[DBI]{dbConnect} or \link[ribbitrrr]{hopToDB}
+#' @param link a link object generated from \link[ribbitrrr]{tbl_link} or \link[ribbitrrr]{tbl_chain}
+#' @param tbl A lazy table object from \link[dplyr]{tbl} corresponding to the root table in the provided link object (optional). If not provided, link object root table will be pulled in its entirity. Passing your own table allows you to filter or select specific columns prior to joining, thereby avoiding pulling nonessential data. Be sure to minimally include essential columns: fkeys, and nkeys or pkeys depending on "by".
+#' @param by What columns to perform join on ("pkey" or "nkey")
+#' @param columns Additional columns to be included from joined tables (string or list of stings). Primary, natural, and foreign key columns are included by default. Set to "all" to include all columns.
+#' @return Returns a single lazy table object of all linked tables joined as specified
+#' @examples
+#' dbcon <- hopToDB("ribbitr")
+#'
+#' mdc <- tbl(dbcon, Id("survey_data", "metadata_columns")) %>%
+#'   filter(table_schema == "survey_data") %>%
+#'   collect()
+#'
+#' # generate link object
+#' capture_chain = tbl_chain("capture", mdc)
+#'
+#' # pre-filter root table (optional)
+#' db_capture = tbl(dbcon, Id("survey_data", "capture")) %>%
+#'   select(all_of(tbl_keys("capture", mdc)),
+#'          species_capture,
+#'          bd_swab_id) %>%
+#'   filter(!is.na(bd_swab_id))
+#'
+#' # create and filter join table
+#' tbl_capture_brazil = tbl_left_join(dbcon, capture_chain, tbl=db_capture) %>%
+#'   filter(location == "brazil")
+#'
+#' # collect (pull) data from database
+#' capture_brazil = tbl_capture_brazil %>%
+#'   collect()
+#' @export
+tbl_left_join = function(dbcon, link, tbl=NA, by="pkey", columns=NA) {
+  return(tbl_join(dbcon, link, tbl=NA, join="left", by="pkey", columns=NA))
+}
+
+#' Inner join using link object
+#'
+#' Inner join tables across a provided link object, generated using \link[ribbitrrr]{tbl_link} or \link[ribbitrrr]{tbl_chain}
+#' @param dbcon database connection object from \link[DBI]{dbConnect} or \link[ribbitrrr]{hopToDB}
+#' @param link a link object generated from \link[ribbitrrr]{tbl_link} or \link[ribbitrrr]{tbl_chain}
+#' @param tbl A lazy table object from \link[dplyr]{tbl} corresponding to the root table in the provided link object (optional). If not provided, link object root table will be pulled in its entirity. Passing your own table allows you to filter or select specific columns prior to joining, thereby avoiding pulling nonessential data. Be sure to minimally include essential columns: fkeys, and nkeys or pkeys depending on "by".
+#' @param by What columns to perform join on ("pkey" or "nkey")
+#' @param columns Additional columns to be included from joined tables (string or list of stings). Primary, natural, and foreign key columns are included by default. Set to "all" to include all columns.
+#' @return Returns a single lazy table object of all linked tables joined as specified
+#' @examples
+#' dbcon <- hopToDB("ribbitr")
+#'
+#' mdc <- tbl(dbcon, Id("survey_data", "metadata_columns")) %>%
+#'   filter(table_schema == "survey_data") %>%
+#'   collect()
+#'
+#' # generate link object
+#' capture_chain = tbl_chain("capture", mdc)
+#'
+#' # pre-filter root table (optional)
+#' db_capture = tbl(dbcon, Id("survey_data", "capture")) %>%
+#'   select(all_of(tbl_keys("capture", mdc)),
+#'          species_capture,
+#'          bd_swab_id) %>%
+#'   filter(!is.na(bd_swab_id))
+#'
+#' # create and filter join table
+#' tbl_capture_brazil = tbl_inner_join(dbcon, capture_chain, tbl=db_capture) %>%
+#'   filter(location == "brazil")
+#'
+#' # collect (pull) data from database
+#' capture_brazil = tbl_capture_brazil %>%
+#'   collect()
+#' @export
+tbl_inner_join = function(dbcon, link, tbl=NA, by="pkey", columns=NA) {
+  return(tbl_join(dbcon, link, tbl=NA, join="inner", by="pkey", columns=NA))
+}
+
+#' Full join using link object
+#'
+#' Full join tables across a provided link object, generated using \link[ribbitrrr]{tbl_link} or \link[ribbitrrr]{tbl_chain}
+#' @param dbcon database connection object from \link[DBI]{dbConnect} or \link[ribbitrrr]{hopToDB}
+#' @param link a link object generated from \link[ribbitrrr]{tbl_link} or \link[ribbitrrr]{tbl_chain}
+#' @param tbl A lazy table object from \link[dplyr]{tbl} corresponding to the root table in the provided link object (optional). If not provided, link object root table will be pulled in its entirity. Passing your own table allows you to filter or select specific columns prior to joining, thereby avoiding pulling nonessential data. Be sure to minimally include essential columns: fkeys, and nkeys or pkeys depending on "by".
+#' @param by What columns to perform join on ("pkey" or "nkey")
+#' @param columns Additional columns to be included from joined tables (string or list of stings). Primary, natural, and foreign key columns are included by default. Set to "all" to include all columns.
+#' @return Returns a single lazy table object of all linked tables joined as specified
+#' @examples
+#' dbcon <- hopToDB("ribbitr")
+#'
+#' mdc <- tbl(dbcon, Id("survey_data", "metadata_columns")) %>%
+#'   filter(table_schema == "survey_data") %>%
+#'   collect()
+#'
+#' # generate link object
+#' capture_chain = tbl_chain("capture", mdc)
+#'
+#' # pre-filter root table (optional)
+#' db_capture = tbl(dbcon, Id("survey_data", "capture")) %>%
+#'   select(all_of(tbl_keys("capture", mdc)),
+#'          species_capture,
+#'          bd_swab_id) %>%
+#'   filter(!is.na(bd_swab_id))
+#'
+#' # create and filter join table
+#' tbl_capture_brazil = tbl_full_join(dbcon, capture_chain, tbl=db_capture) %>%
+#'   filter(location == "brazil")
+#'
+#' # collect (pull) data from database
+#' capture_brazil = tbl_capture_brazil %>%
+#'   collect()
+#' @export
+tbl_full_join = function(dbcon, link, tbl=NA, by="pkey", columns=NA) {
+  return(tbl_join(dbcon, link, tbl=NA, join="full", by="pkey", columns=NA))
+}
+
+#' Right join using link object
+#'
+#' Right join tables across a provided link object, generated using \link[ribbitrrr]{tbl_link} or \link[ribbitrrr]{tbl_chain}
+#' @param dbcon database connection object from \link[DBI]{dbConnect} or \link[ribbitrrr]{hopToDB}
+#' @param link a link object generated from \link[ribbitrrr]{tbl_link} or \link[ribbitrrr]{tbl_chain}
+#' @param tbl A lazy table object from \link[dplyr]{tbl} corresponding to the root table in the provided link object (optional). If not provided, link object root table will be pulled in its entirity. Passing your own table allows you to filter or select specific columns prior to joining, thereby avoiding pulling nonessential data. Be sure to minimally include essential columns: fkeys, and nkeys or pkeys depending on "by".
+#' @param by What columns to perform join on ("pkey" or "nkey")
+#' @param columns Additional columns to be included from joined tables (string or list of stings). Primary, natural, and foreign key columns are included by default. Set to "all" to include all columns.
+#' @return Returns a single lazy table object of all linked tables joined as specified
+#' @examples
+#' dbcon <- hopToDB("ribbitr")
+#'
+#' mdc <- tbl(dbcon, Id("survey_data", "metadata_columns")) %>%
+#'   filter(table_schema == "survey_data") %>%
+#'   collect()
+#'
+#' # generate link object
+#' capture_chain = tbl_chain("capture", mdc)
+#'
+#' # pre-filter root table (optional)
+#' db_capture = tbl(dbcon, Id("survey_data", "capture")) %>%
+#'   select(all_of(tbl_keys("capture", mdc)),
+#'          species_capture,
+#'          bd_swab_id) %>%
+#'   filter(!is.na(bd_swab_id))
+#'
+#' # create and filter join table
+#' tbl_capture_brazil = tbl_right_join(dbcon, capture_chain, tbl=db_capture) %>%
+#'   filter(location == "brazil")
+#'
+#' # collect (pull) data from database
+#' capture_brazil = tbl_capture_brazil %>%
+#'   collect()
+#' @export
+tbl_right_join = function(dbcon, link, tbl=NA, by="pkey", columns=NA) {
+  return(tbl_join(dbcon, link, tbl=NA, join="right", by="pkey", columns=NA))
 }
