@@ -8,7 +8,7 @@
 \alias{tbl_right_join}
 \title{Join tables with link object}
 \usage{
-tbl_join(dbcon, link, tbl = NA, join = "left", by = "pkey", columns = NA)
+tbl_join(dbcon, link, tbl = NA, join = "left", by = "pkey", columns = "all")
 }
 \arguments{
 \item{dbcon}{database connection object from \link[DBI]{dbConnect} or \link[ribbitrrr]{hopToDB}}
@@ -21,7 +21,7 @@ tbl_join(dbcon, link, tbl = NA, join = "left", by = "pkey", columns = NA)
 
 \item{by}{What columns to perform join on ("pkey" or "nkey")}
 
-\item{columns}{Additional columns to be included from joined tables (string or list of stings). Primary, natural, and foreign key columns are included by default. Set to "all" to include all columns.}
+\item{columns}{Additional columns to be included from joined tables (string or list of stings). Set to "all" to include all columns. Primary, natural, and foreign key columns are always included by default (columns = NA)}
 }
 \value{
 Returns a single lazy table object of all linked tables joined as specified

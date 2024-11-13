@@ -4,7 +4,7 @@
 \alias{tbl_inner_join}
 \title{Inner join using link object}
 \usage{
-tbl_inner_join(dbcon, link, tbl = NA, by = "pkey", columns = NA)
+tbl_inner_join(dbcon, link, tbl = NA, by = "pkey", columns = "all")
 }
 \arguments{
 \item{dbcon}{database connection object from \link[DBI]{dbConnect} or \link[ribbitrrr]{hopToDB}}
@@ -15,7 +15,7 @@ tbl_inner_join(dbcon, link, tbl = NA, by = "pkey", columns = NA)
 
 \item{by}{What columns to perform join on ("pkey" or "nkey")}
 
-\item{columns}{Additional columns to be included from joined tables (string or list of stings). Primary, natural, and foreign key columns are included by default. Set to "all" to include all columns.}
+\item{columns}{Additional columns to be included from joined tables (string or list of stings). Set to "all" to include all columns. Primary, natural, and foreign key columns are always included by default (columns = NA)}
 }
 \value{
 Returns a single lazy table object of all linked tables joined as specified

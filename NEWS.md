@@ -1,6 +1,12 @@
 # ribbitrrr
 
-## [0.0.1.2] - 2024-11-12
+## [0.0.1.4] - 2024-11-13
+### Changed
+
+- user prompting for hopToDB() when user and/or password are not provided in .Renviron
+- tbl_join() and related aliases default columns = "all"
+
+## [0.0.1.3] - 2024-11-12
 ### Added
 
 - tbl_left_join()
@@ -10,7 +16,6 @@
 
 ### Changed
 
-- user prompting for hopToDB() when user and/or password are not provided in .Renviron
 - tbl_pkey & tbl_fkey now query using mdc binary primary_key and foreign_key columns
 
 ## [0.0.1.1] - 2024-11-06

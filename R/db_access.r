@@ -353,7 +353,7 @@ tbl_chain = function(tbl_name, metadata_columns, until=NA) {
 #' @param tbl A lazy table object from \link[dplyr]{tbl} corresponding to the root table in the provided link object (optional). If not provided, link object root table will be pulled in its entirity. Passing your own table allows you to filter or select specific columns prior to joining, thereby avoiding pulling nonessential data. Be sure to minimally include essential columns: fkeys, and nkeys or pkeys depending on "by".
 #' @param join Type of join to be executed ("left", "inner", "full", or "right")
 #' @param by What columns to perform join on ("pkey" or "nkey")
-#' @param columns Additional columns to be included from joined tables (string or list of stings). Primary, natural, and foreign key columns are included by default. Set to "all" to include all columns.
+#' @param columns Additional columns to be included from joined tables (string or list of stings). Set to "all" to include all columns. Primary, natural, and foreign key columns are always included by default (columns = NA)
 #' @return Returns a single lazy table object of all linked tables joined as specified
 #' @examples
 #' dbcon <- hopToDB("ribbitr")
@@ -385,7 +385,7 @@ tbl_chain = function(tbl_name, metadata_columns, until=NA) {
 #' @importFrom stats na.omit
 #' @aliases tbl_left_join tbl_inner_join tbl_full_join tbl_right_join tbl_join
 #' @export
-tbl_join = function(dbcon, link, tbl=NA, join="left", by="pkey", columns=NA) {
+tbl_join = function(dbcon, link, tbl=NA, join="left", by="pkey", columns="all") {
 
   if (is.na(columns)) {
     select_columns = TRUE
@@ -462,7 +462,7 @@ tbl_join = function(dbcon, link, tbl=NA, join="left", by="pkey", columns=NA) {
 #' @param link a link object generated from \link[ribbitrrr]{tbl_link} or \link[ribbitrrr]{tbl_chain}
 #' @param tbl A lazy table object from \link[dplyr]{tbl} corresponding to the root table in the provided link object (optional). If not provided, link object root table will be pulled in its entirity. Passing your own table allows you to filter or select specific columns prior to joining, thereby avoiding pulling nonessential data. Be sure to minimally include essential columns: fkeys, and nkeys or pkeys depending on "by".
 #' @param by What columns to perform join on ("pkey" or "nkey")
-#' @param columns Additional columns to be included from joined tables (string or list of stings). Primary, natural, and foreign key columns are included by default. Set to "all" to include all columns.
+#' @param columns Additional columns to be included from joined tables (string or list of stings). Set to "all" to include all columns. Primary, natural, and foreign key columns are always included by default (columns = NA)
 #' @return Returns a single lazy table object of all linked tables joined as specified
 #' @examples
 #' dbcon <- hopToDB("ribbitr")
@@ -489,8 +489,8 @@ tbl_join = function(dbcon, link, tbl=NA, join="left", by="pkey", columns=NA) {
 #' capture_brazil = tbl_capture_brazil %>%
 #'   collect()
 #' @export
-tbl_left_join = function(dbcon, link, tbl=NA, by="pkey", columns=NA) {
-  return(tbl_join(dbcon, link, tbl=NA, join="left", by="pkey", columns=NA))
+tbl_left_join = function(dbcon, link, tbl=NA, by="pkey", columns="all") {
+  return(tbl_join(dbcon, link, tbl=tbl, join="left", by=by, columns=columns))
 }
 
 #' Inner join using link object
@@ -500,7 +500,7 @@ tbl_left_join = function(dbcon, link, tbl=NA, by="pkey", columns=NA) {
 #' @param link a link object generated from \link[ribbitrrr]{tbl_link} or \link[ribbitrrr]{tbl_chain}
 #' @param tbl A lazy table object from \link[dplyr]{tbl} corresponding to the root table in the provided link object (optional). If not provided, link object root table will be pulled in its entirity. Passing your own table allows you to filter or select specific columns prior to joining, thereby avoiding pulling nonessential data. Be sure to minimally include essential columns: fkeys, and nkeys or pkeys depending on "by".
 #' @param by What columns to perform join on ("pkey" or "nkey")
-#' @param columns Additional columns to be included from joined tables (string or list of stings). Primary, natural, and foreign key columns are included by default. Set to "all" to include all columns.
+#' @param columns Additional columns to be included from joined tables (string or list of stings). Set to "all" to include all columns. Primary, natural, and foreign key columns are always included by default (columns = NA)
 #' @return Returns a single lazy table object of all linked tables joined as specified
 #' @examples
 #' dbcon <- hopToDB("ribbitr")
@@ -527,8 +527,8 @@ tbl_left_join = function(dbcon, link, tbl=NA, by="pkey", columns=NA) {
 #' capture_brazil = tbl_capture_brazil %>%
 #'   collect()
 #' @export
-tbl_inner_join = function(dbcon, link, tbl=NA, by="pkey", columns=NA) {
-  return(tbl_join(dbcon, link, tbl=NA, join="inner", by="pkey", columns=NA))
+tbl_inner_join = function(dbcon, link, tbl=NA, by="pkey", columns="all") {
+  return(tbl_join(dbcon, link, tbl=tbl, join="inner", by=by, columns=columns))
 }
 
 #' Full join using link object
@@ -538,7 +538,7 @@ tbl_inner_join = function(dbcon, link, tbl=NA, by="pkey", columns=NA) {
 #' @param link a link object generated from \link[ribbitrrr]{tbl_link} or \link[ribbitrrr]{tbl_chain}
 #' @param tbl A lazy table object from \link[dplyr]{tbl} corresponding to the root table in the provided link object (optional). If not provided, link object root table will be pulled in its entirity. Passing your own table allows you to filter or select specific columns prior to joining, thereby avoiding pulling nonessential data. Be sure to minimally include essential columns: fkeys, and nkeys or pkeys depending on "by".
 #' @param by What columns to perform join on ("pkey" or "nkey")
-#' @param columns Additional columns to be included from joined tables (string or list of stings). Primary, natural, and foreign key columns are included by default. Set to "all" to include all columns.
+#' @param columns Additional columns to be included from joined tables (string or list of stings). Set to "all" to include all columns. Primary, natural, and foreign key columns are always included by default (columns = NA)
 #' @return Returns a single lazy table object of all linked tables joined as specified
 #' @examples
 #' dbcon <- hopToDB("ribbitr")
@@ -565,8 +565,8 @@ tbl_inner_join = function(dbcon, link, tbl=NA, by="pkey", columns=NA) {
 #' capture_brazil = tbl_capture_brazil %>%
 #'   collect()
 #' @export
-tbl_full_join = function(dbcon, link, tbl=NA, by="pkey", columns=NA) {
-  return(tbl_join(dbcon, link, tbl=NA, join="full", by="pkey", columns=NA))
+tbl_full_join = function(dbcon, link, tbl=NA, by="pkey", columns="all") {
+  return(tbl_join(dbcon, link, tbl=tbl, join="full", by=by, columns=columns))
 }
 
 #' Right join using link object
@@ -576,7 +576,7 @@ tbl_full_join = function(dbcon, link, tbl=NA, by="pkey", columns=NA) {
 #' @param link a link object generated from \link[ribbitrrr]{tbl_link} or \link[ribbitrrr]{tbl_chain}
 #' @param tbl A lazy table object from \link[dplyr]{tbl} corresponding to the root table in the provided link object (optional). If not provided, link object root table will be pulled in its entirity. Passing your own table allows you to filter or select specific columns prior to joining, thereby avoiding pulling nonessential data. Be sure to minimally include essential columns: fkeys, and nkeys or pkeys depending on "by".
 #' @param by What columns to perform join on ("pkey" or "nkey")
-#' @param columns Additional columns to be included from joined tables (string or list of stings). Primary, natural, and foreign key columns are included by default. Set to "all" to include all columns.
+#' @param columns Additional columns to be included from joined tables (string or list of stings). Set to "all" to include all columns. Primary, natural, and foreign key columns are always included by default (columns = NA)
 #' @return Returns a single lazy table object of all linked tables joined as specified
 #' @examples
 #' dbcon <- hopToDB("ribbitr")
@@ -603,6 +603,6 @@ tbl_full_join = function(dbcon, link, tbl=NA, by="pkey", columns=NA) {
 #' capture_brazil = tbl_capture_brazil %>%
 #'   collect()
 #' @export
-tbl_right_join = function(dbcon, link, tbl=NA, by="pkey", columns=NA) {
-  return(tbl_join(dbcon, link, tbl=NA, join="right", by="pkey", columns=NA))
+tbl_right_join = function(dbcon, link, tbl=NA, by="pkey", columns="all") {
+  return(tbl_join(dbcon, link, tbl=tbl, join="right", by=by, columns=columns))
 }
