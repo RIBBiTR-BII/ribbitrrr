@@ -23,7 +23,29 @@
 #' data_duplicates = comparison$duplicate
 #' @importFrom dplyr %>% bind_rows anti_join group_by_at count ungroup mutate filter select inner_join
 #' @export
+#'
 compare_for_staging = function(data_old, data_new, key_columns, insert=TRUE, update=TRUE, orphan=FALSE, duplicate=FALSE, return_all=FALSE, report=FALSE){
+
+  # Checks
+  old_dups = nrow(data_old %>%
+                    select(all_of(key_columns)) %>%
+                    group_by_at(key_columns) %>%
+                    summarise(k_count = n()) %>%
+                    filter(k_count > 1))
+
+  if (old_dups != 0) {
+    stop("Duplicate key_column combinations found in data_old. Comparison aborted.")
+  }
+
+  new_dups = nrow(data_new %>%
+                    select(all_of(key_columns)) %>%
+                    group_by_at(key_columns) %>%
+                    summarise(k_count = n()) %>%
+                    filter(k_count > 1))
+
+  if (new_dups != 0) {
+    stop("Duplicate key_column combinations found in data_new. Comparison aborted.")
+  }
 
   output = list()
 
