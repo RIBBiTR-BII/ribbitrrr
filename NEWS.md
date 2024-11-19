@@ -5,6 +5,7 @@
 
 - user prompting for hopToDB() when user and/or password are not provided in .Renviron
 - tbl_join() and related aliases default columns = "all"
+- prohibit internal duplicates in compare_for_staging
 
 ## [0.0.1.3] - 2024-11-12
 ### Added

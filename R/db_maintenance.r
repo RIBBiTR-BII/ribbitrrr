@@ -132,6 +132,50 @@ compare_for_staging = function(data_old, data_new, key_columns, insert=TRUE, upd
   return(output)
 }
 
+#' Distinguishing columns to update
+#'
+#' Using output results from \link[ribbitrrr]{compare_for_staging}, identifies which columns differ for a given set of rows and outputs a comparison table for each column.
+#' @param data_old Results from \link[ribbitrrr]{compare_for_staging} which contain updates (either update = TRUE or return_all = TRUE)
+#' @return A list of dataframes corresponding to columns which differe between update and update_old data.
+#' @examples
+#'
+#' data_old = data.frame(id= 1:5, values = c("a", "b", "c", "d", "e"))
+#' data_new = data.frame(id = 3:7, values = c("d", "d", "f", "f", "g"))
+#'
+#' comparison <- compare_for_staging(data_old, data_new, key_columns = c("id"), return_all = TRUE)
+#' update_diffs <- compare_updates(comparison)
+#' @importFrom dplyr %>% bind_rows anti_join group_by_at count ungroup mutate filter select inner_join
+#' @export
+#'
+compare_updates = function(cfs_results) {
+
+  df1 = cfs_results$update
+  df2 = cfs_results$update_old
+
+  diffs_by_col = list()
+  # Compare the contents of each column
+  for (col in names(df1)) {
+    # Use is.na() to handle NA values and compare non-NA values
+    if (!identical(is.na(df1[[col]]), is.na(df2[[col]])) ||
+        !all(df1[[col]] == df2[[col]], na.rm = TRUE)) {
+      print(paste("\nDifferences found in column '", col, "':", sep = ""))
+
+      # Create a logical vector for differences, considering NA values
+      diff_mask <- is.na(df1[[col]]) != is.na(df2[[col]]) |
+        ((!is.na(df1[[col]]) & !is.na(df2[[col]])) & (df1[[col]] != df2[[col]]))
+
+      diff_df <- data.frame(
+        new_data = df1[[col]][diff_mask],
+        old_data = df2[[col]][diff_mask],
+        row = which(diff_mask)
+      )
+      diffs_by_col[[col]] = diff_df
+    }
+  }
+  return(diffs_by_col)
+}
+
+
 #' Stage data to temporary database table
 #'
 #' This function allows you to push new data to a temporary table of the same constraints/datatypes as the table you want to eventually push to, to make sure everything checks out. Once data is staged, it can be pushed (inserted, updated, upserted) to the corresponding database table using ____.

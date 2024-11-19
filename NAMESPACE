@@ -2,6 +2,7 @@
 
 export(check_ribbitrrr_update)
 export(compare_for_staging)
+export(compare_updates)
 export(hopToDB)
 export(stage_to_temp)
 export(tbl_chain)
