@@ -3,6 +3,12 @@
 ## [0.0.1.4] - 2024-11-13
 ### Changed
 
+- patch tbl_link to handle fkey reference columns which differ in name from fkey column
+- patch tbl_chain to handle loops in table graph
+
+## [0.0.1.4] - 2024-11-13
+### Changed
+
 - user prompting for hopToDB() when user and/or password are not provided in .Renviron
 - tbl_join() and related aliases default columns = "all"
 - prohibit internal duplicates in compare_for_staging

@@ -149,6 +149,37 @@ tbl_fkey = function(tbl_name, metadata_columns) {
     pull("column_name")
 }
 
+#' Table foreign key reference columns
+#'
+#' Identify the foreign key reference column for a given foreign key.
+#' @param tbl_schema The name of the schema of the table of interest (string)
+#' @param tbl_name The name of the table of interest (string)
+#' @param tbl_fkey_col The name of the fkey column in the table of interest (string)
+#' @param metadata_columns Column metadata containing the table of interest (Data Frame)
+#' @return The name(s) of the columns with foreign key status in the table provided
+#' @examples
+#' dbcon <- hopToDB("ribbitr")
+#'
+#' mdc <- tbl(dbcon, Id("public", "all_columns")) %>%
+#'             filter(table_schema =="survey_data") %>%
+#'             collect()
+#'
+#' survey_fkey <- tbl_fkey('survey', mdc)
+#' @importFrom dplyr %>% filter pull
+#' @export
+tbl_fkey_ref = function(tbl_schema, tbl_name, tbl_fkey_col, metadata_columns) {
+
+  as.list(metadata_columns %>%
+    filter(table_schema == tbl_schema,
+           table_name == tbl_name,
+           column_name == tbl_fkey_col) %>%
+    select(fkey_ref_schema,
+           fkey_ref_table,
+           fkey_ref_column) %>%
+    collect())
+}
+
+
 #' Table natural key
 #'
 #' Identify the natural key column(s) for a given table in the database metadata.  A natural key is comprised of the columns which naturally identify a given row, and which are generally used to generate ID columns used as primary keys. There is only one natural key per table, though it may be comprised of multiple columns (a "composite" key).
@@ -223,42 +254,38 @@ tbl_link = function(tbl_name, metadata_columns, return_root=TRUE) {
 
   fkey_list = tbl_fkey(tbl_name, metadata_columns)
 
-  if (return_root) {
-    # pull root info
-    tbl_root = metadata_columns %>%
-      filter(table_name == tbl_name,
-             key_type == "PK") %>%
-      select(table_schema, column_name) %>%
-      collect()
 
-    # record initial table as "root"
-    link$root = list(schema = tbl_root$table_schema,
-                     table = tbl_name,
-                     pkey = tbl_root$column_name,
-                     nkey = tbl_nkey(tbl_name, metadata_columns),
-                     fkey = fkey_list)
+  # pull root info
+  tbl_root = metadata_columns %>%
+    filter(table_name == tbl_name,
+           key_type == "PK") %>%
+    select(table_schema, column_name) %>%
+    collect()
+
+  # record initial table as "root"
+  root = list(schema = tbl_root$table_schema,
+              table = tbl_name,
+              pkey = tbl_root$column_name,
+              nkey = tbl_nkey(tbl_name, metadata_columns),
+              fkey = fkey_list)
+
+  if (return_root) {
+    link$root = root
   }
 
   parents = list()
 
     for (ff in fkey_list) {
-      pkey = ff # name change ~ point of view of referenced table
-
-      # filter metadata columns for a column with pkey == fkey (requires unique pkey/fkey column names within database)
-      tbl_parent = metadata_columns %>%
-        filter(column_name == pkey,
-               key_type == "PK") %>%
-        select(table_schema, table_name) %>%
-        collect()
+      ref = tbl_fkey_ref(root$schema, root$table, ff, metadata_columns)
 
       # identify nkeys
-      nkey = tbl_nkey(tbl_parent$table_name, metadata_columns)
+      nkey = tbl_nkey(ref$fkey_ref_table, metadata_columns)
       # identify fkeys
-      fkey = tbl_fkey(tbl_parent$table_name, metadata_columns)
+      fkey = tbl_fkey(ref$fkey_ref_table, metadata_columns)
       # save all to parents list
-      parents[[tbl_parent$table_name]] = list(schema=tbl_parent$table_schema,
-                                              table=tbl_parent$table_name,
-                                              pkey=pkey,
+      parents[[ref$fkey_ref_table]] = list(schema=ref$fkey_ref_schema,
+                                              table=ref$fkey_ref_table,
+                                              pkey=ref$fkey_ref_column,  # assumes fkey always references pkey
                                               nkey=nkey,
                                               fkey=fkey)
     }
@@ -317,14 +344,17 @@ tbl_chain = function(tbl_name, metadata_columns, until=NA) {
 
     # for each reference table found
     if (length(link_active$parents) > 0) {
+
       for (ll in link_active$parents) {
+        if (!(ll$table %in% names(chain$parents))) {
 
-        if (!(ll$table %in% until)) {
-          # add to tbl_list, unless tbl is in "until"
-          tbl_list <- append(tbl_list, ll$table)
+          if (!(ll$table %in% until)) {
+            # add to tbl_list, unless tbl is in "until"
+            tbl_list <- append(tbl_list, ll$table)
+          }
+
+          chain$parents[[ll$table]] = ll
         }
-
-        chain$parents[[ll$table]] = ll
       }
     }
 
