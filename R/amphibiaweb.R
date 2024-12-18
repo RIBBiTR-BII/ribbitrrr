@@ -23,23 +23,26 @@ scrape_amphibiaweb <- function(sci_nam) {
     safe_gna_verifier <- safely(gna_verifier)
     gna_results <- safe_gna_verifier(name_submitted, data_sources = 118, capitalize = TRUE)
 
-    if (is.null(gna_results$result) || nrow(gna_result$result) == 0) {
-      gna_results$result = tibble(
-        matchedName = NA_character_,
-        recordId = NA_character_,
-        sortScore = NA_character_,
-        matchedNameID = NA_character_
-      )
+    if (is.null(gna_results$result) || nrow(gna_results$result) == 0) {
+      return(tibble(
+        name_submitted = name_submitted,
+        scientific_name = NA,
+        record_id = NA,
+        sort_score = NA,
+        matched_name_id = NA,
+        amphib_id = NA,
+        ordr = NA,
+        family = NA,
+        subfamily = NA,
+        genus = NA,
+        species = NA,
+        clade = NA,
+        common_name = NA,
+        url = NA
+      ))
     }
 
-    if (is.na(gna_results$result[1, 'matchedName'])) {
-      aw_name = name_submitted
-    } else {
-      aw_name = gna_results$result[1, 'matchedName']
-    }
-
-
-    name_matched <- as.character(aw_name)
+    name_matched <- as.character(gna_results$result[1, 'matchedName'])
     name_parts <- strsplit(name_matched, " ")[[1]]
     genus <- name_parts[1]
     species <- name_parts[2]
@@ -75,14 +78,13 @@ scrape_amphibiaweb <- function(sci_nam) {
         url = url
       )
     }, error = function(e) {
-      warning(paste("Error processing", name_submitted))
+      warning(paste("Error processing", name_submitted, ":", e$message))
       return(tibble(
         name_submitted = name_submitted,
         scientific_name = name_matched,
         record_id = gna_results$result[1, 'recordId'],
         sort_score = gna_results$result[1, 'sortScore'],
         matched_name_id = gna_results$result[1, 'matchedNameID'],
-        authority = "AmphibiaWeb",
         amphib_id = NA,
         ordr = NA,
         family = NA,
