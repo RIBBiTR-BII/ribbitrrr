@@ -26,7 +26,7 @@
 #'
 compare_for_staging = function(data_old, data_new, key_columns, insert=TRUE, update=TRUE, orphan=FALSE, duplicate=FALSE, return_all=FALSE, report=FALSE){
 
-  # Checks
+  # Check for key column duplicates
   old_dups = nrow(data_old %>%
                     select(all_of(key_columns)) %>%
                     group_by_at(key_columns) %>%
@@ -37,6 +37,7 @@ compare_for_staging = function(data_old, data_new, key_columns, insert=TRUE, upd
     stop("Duplicate key_column combinations found in data_old. Comparison aborted.")
   }
 
+  # Check for key column duplicates
   new_dups = nrow(data_new %>%
                     select(all_of(key_columns)) %>%
                     group_by_at(key_columns) %>%
@@ -52,7 +53,7 @@ compare_for_staging = function(data_old, data_new, key_columns, insert=TRUE, upd
   common_columns = intersect(colnames(data_old), colnames(data_new))
 
   # DUPLICATE: rows identical in both data_old and data_new
-  # logic: find duplicate rows
+  # logic: find duplicate rows on common columns (ignore unmatched columns)
   data_bind = bind_rows(data_new, data_old)
   data_duplicate = data_bind[duplicated(data_bind),]
   if (duplicate || return_all){

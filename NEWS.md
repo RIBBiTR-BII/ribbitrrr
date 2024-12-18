@@ -1,6 +1,10 @@
 # ribbitrrr
 
-## [0.0.1.4] - 2024-11-13
+## [0.0.1.6] - 2024-12-18
+### Added
+- scrape_amphibiaweb() function
+
+## [0.0.1.5] - 2024-11-13
 ### Changed
 
 - patch tbl_link to handle fkey reference columns which differ in name from fkey column
