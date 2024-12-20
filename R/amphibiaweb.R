@@ -9,18 +9,22 @@
 #' print(results)
 #' @importFrom httr GET stop_for_status content
 #' @importFrom xml2 read_xml xml_text xml_find_first
-#' @importFrom taxize gna_verifier
 #' @importFrom purrr map_df safely
 #' @importFrom dplyr tibble
 #' @export
 
 scrape_amphibiaweb <- function(sci_nam) {
+  if (!requireNamespace("taxize", quietly = TRUE)) {
+    stop("The 'taxize' package is required but not installed. Please install it to use this function.")
+  }
+
+
   base_url <- "https://amphibiaweb.org/cgi/amphib_ws?where-genus={genus}&where-species={species}&src=eol"
 
   process_name <- function(name_submitted) {
     cat("\033[38;5;240m", "Processing -- ", name_submitted, "\n")
 
-    safe_gna_verifier <- safely(gna_verifier)
+    safe_gna_verifier <- safely(taxize::gna_verifier)
     gna_results <- safe_gna_verifier(name_submitted, data_sources = 118, capitalize = TRUE)
 
     if (is.null(gna_results$result) || nrow(gna_results$result) == 0) {

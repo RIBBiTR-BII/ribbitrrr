@@ -1,6 +1,6 @@
 Package: ribbitrrr
 Title: RIBBiTR R Resources package
-Version: 0.0.1.5
+Version: 0.0.1.6
 Authors@R: 
     person("Cob", "Staines", , "cobstainesconsulting@gmail.com", role = c("aut", "cre"),
            comment = c(ORCID = "0009-0003-1819-3621"))
@@ -17,8 +17,7 @@ Imports:
     utils,
     httr,
     xml2,
-    purrr,
-    taxize
+    purrr
 Suggests: 
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
