@@ -8,6 +8,8 @@ scrape_amphibiaweb(sci_nam, quietly = FALSE)
 }
 \arguments{
 \item{sci_nam}{Scientific name(s) of species of interest}
+
+\item{quietly}{TRUE/FALSE, do you want to print each query?}
 }
 \value{
 Associated metadata (if any)

@@ -2,6 +2,7 @@
 #'
 #' Searches scientific names for corresponding species in AmphibiaWeb
 #' @param sci_nam Scientific name(s) of species of interest
+#' @param quietly TRUE/FALSE, do you want to print each query?
 #' @return Associated metadata (if any)
 #' @examples
 #' scientific_names <- c("Rana muscosa", "Oedipina gracilis")
