@@ -35,7 +35,7 @@ scrape_amphibiaweb <- function(sci_nam, quietly = FALSE) {
       sort_score = NA,
       matched_name_id = NA,
       amphib_id = NA,
-      ordr = NA,
+      order = NA,
       family = NA,
       subfamily = NA,
       genus = NA,
@@ -79,7 +79,7 @@ scrape_amphibiaweb <- function(sci_nam, quietly = FALSE) {
       }
 
       result$amphib_id <- extract_value("//amphib_id")
-      result$ordr <- extract_value("//ordr")
+      result$order <- extract_value("//ordr")
       result$family <- extract_value("//family")
       result$subfamily <- extract_value("//subfamily")
       result$genus <- extract_value("//genus")
