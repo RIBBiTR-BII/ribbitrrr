@@ -13,7 +13,7 @@
 #' @importFrom dplyr tibble
 #' @export
 
-scrape_amphibiaweb <- function(sci_nam) {
+scrape_amphibiaweb <- function(sci_nam, quietly = FALSE) {
   if (!requireNamespace("taxize", quietly = TRUE)) {
     stop("The 'taxize' package is required but not installed. Please install it to use this function.")
   }
@@ -21,7 +21,10 @@ scrape_amphibiaweb <- function(sci_nam) {
   base_url <- "https://amphibiaweb.org/cgi/amphib_ws?where-genus={genus}&where-species={species}&src=eol"
 
   process_name <- function(name_submitted) {
-    cat("\033[38;5;240m", "Processing -- ", name_submitted, "\n")
+
+    if (!quietly) {
+      cat("\033[38;5;240m", "Processing -- ", name_submitted, "\n")
+    }
 
     # Initialize result tibble with default NA values
     result <- tibble(

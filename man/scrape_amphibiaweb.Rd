@@ -4,7 +4,7 @@
 \alias{scrape_amphibiaweb}
 \title{Scrape taxa metadata from AmphibiaWeb}
 \usage{
-scrape_amphibiaweb(sci_nam)
+scrape_amphibiaweb(sci_nam, quietly = FALSE)
 }
 \arguments{
 \item{sci_nam}{Scientific name(s) of species of interest}
