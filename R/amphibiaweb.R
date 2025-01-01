@@ -30,10 +30,6 @@ scrape_amphibiaweb <- function(sci_nam, quietly = FALSE) {
     # Initialize result tibble with default NA values
     result <- tibble(
       name_submitted = name_submitted,
-      scientific_name = NA,
-      record_id = NA,
-      sort_score = NA,
-      matched_name_id = NA,
       amphib_id = NA,
       order = NA,
       family = NA,
@@ -45,28 +41,14 @@ scrape_amphibiaweb <- function(sci_nam, quietly = FALSE) {
       url = NA
     )
 
-    # Attempt GNA verification
-    tryCatch({
-      gna_results <- taxize::gna_verifier(name_submitted, data_sources = 118, capitalize = TRUE)
-      if (!is.null(gna_results) && nrow(gna_results) > 0) {
-        result$scientific_name <- as.character(gna_results[1, 'matchedName'])
-        result$record_id <- gna_results[1, 'recordId']
-        result$sort_score <- gna_results[1, 'sortScore']
-        result$matched_name_id <- gna_results[1, 'matchedNameID']
-      }
-    }, error = function(e) {
-      # warning(paste("GNA verification failed for", name_submitted, ":", e$message))
-    })
-
     # Attempt AmphibiaWeb scraping
     tryCatch({
-      name_parts <- strsplit(ifelse(is.na(result$scientific_name), name_submitted, result$scientific_name), " ")[[1]]
+      name_parts <- strsplit(name_submitted, " ")[[1]]
       genus <- name_parts[1]
       species <- if (length(name_parts) > 1) name_parts[2] else ""
 
       url <- gsub("\\{genus\\}", genus, base_url)
       url <- gsub("\\{species\\}", species, url)
-      result$url <- url
 
       response <- GET(url)
       stop_for_status(response)
@@ -86,6 +68,10 @@ scrape_amphibiaweb <- function(sci_nam, quietly = FALSE) {
       result$species <- extract_value("//species")
       result$clade <- extract_value("//clade")
       result$common_name <- extract_value("//common_name")
+
+      if (!is.na(result$amphib_id)) {
+        result$url <- url
+      }
     }, error = function(e) {
       # warning(paste("AmphibiaWeb scraping failed for", name_submitted, ":", e$message))
     })
