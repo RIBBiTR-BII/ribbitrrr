@@ -54,16 +54,10 @@ compare_for_staging = function(data_old, data_new, key_columns, insert=TRUE, upd
 
   # DUPLICATE: rows identical in both data_old and data_new
   # logic: find duplicate rows on common columns (ignore unmatched columns)
-  data_bind = bind_rows(data_new, data_old)
+  data_bind = bind_rows(data_new[common_columns], data_old[common_columns])
   data_duplicate = data_bind[duplicated(data_bind),]
   if (duplicate || return_all){
-    duplicate_new = data_duplicate %>%
-      inner_join(data_new, by=common_columns)
-    duplicate_old = data_duplicate %>%
-      inner_join(data_old, by=common_columns)
-
-    output[["duplicate"]] = duplicate_new
-    output[["duplicate_old"]] = duplicate_old
+    output[["duplicate"]] = data_duplicate
   }
 
   # bind rows ignoring duplicates, tracking source
