@@ -105,11 +105,20 @@ compare_for_staging = function(data_old, data_new, key_columns, insert=TRUE, upd
       filter(n == 2) %>%
       select(-n)
 
+    update_cols = setdiff(common_columns, key_columns)
+
     data_update_new = data_update_keys %>%
-      inner_join(data_new, by=key_columns)
+      inner_join(data_new, by=key_columns) %>%
+      inner_join(data_old %>%
+                   select(-all_of(update_cols)), by=key_columns) %>%
+      select(all_of(key_columns),
+             all_of(colnames(data_old)))
+
 
     data_update_old = data_update_keys %>%
-      inner_join(data_old, by=key_columns)
+      inner_join(data_old, by=key_columns) %>%
+      select(all_of(key_columns),
+             all_of(colnames(data_old)))
 
     output[["update"]] = data_update_new
     output[["update_old"]] = data_update_old
