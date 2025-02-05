@@ -27,10 +27,10 @@ hopRegister = function(dbcon, dbhost, dbname = NA) {
       icon = system.file("icons", "postgres.png", package = "RPostgres"),
       connectCode = paste0("ribbitrrr::hopToDB(", dbname, ")"),
       disconnect = function() {
-        dbDisconnect(dbcon)
         observer <- getOption("connectionObserver")
         if (!is.null(observer))
           observer$connectionClosed("PostgreSQL", dbhost)
+        dbDisconnect(dbcon)
         },
       listObjectTypes = function() {
         list(
