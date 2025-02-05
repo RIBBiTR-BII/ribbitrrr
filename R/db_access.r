@@ -1,9 +1,123 @@
+#' hopRegister
+#'
+#' Register connection in RStudio Connections Pane
+#' @param dbcon DBI database connection object
+#' @param dbhost database host
+#' @param dbname an identifier (string) for the connection
+#' @param dbcon DBI connection object
+#' @importFrom DBI dbListObjects dbSendQuery dbColumnInfo dbClearResult dbGetQuery dbDisconnect
+#' @importFrom dplyr filter mutate
+#' @importFrom purrr map_chr
+#' @export
+
+hopRegister = function(dbcon, dbhost, dbname = NA) {
+  if (is.na(dbname)) {
+    connection_name = "active_connection"
+  } else {
+    connection_name = dbname
+  }
+
+  # Register the connection with RStudio
+  observer = getOption("connectionObserver")
+  if (!is.null(observer)) {
+    observer$connectionOpened(
+      type = "PostgreSQL",
+      host = dbhost,
+      displayName = connection_name,
+      icon = system.file("icons", "postgres.png", package = "RPostgres"),
+      connectCode = paste0("ribbitrrr::hopToDB(", dbname, ")"),
+      disconnect = function() {
+        dbDisconnect(dbcon)
+        observer <- getOption("connectionObserver")
+        if (!is.null(observer))
+          observer$connectionClosed("PostgreSQL", dbhost)
+        },
+      listObjectTypes = function() {
+        list(
+          schema = list(
+            contains = list(table = list(contains = "data"),
+                            view = list(contains = "data")))
+        )
+      },
+      listObjects = function(schema = NULL) {
+
+        if (is.null(schema)) {
+          schemas = dbListObjects(dbcon) %>%
+            filter(is_prefix) %>%
+            mutate(schema_name = purrr::map_chr(table, ~slot(.x, "name")[1]),
+                   type = "schema") %>%
+            filter(!(schema_name %in% c("information_schema", "pg_catalog")))
+
+          return(
+            data.frame(
+              name = schemas[["schema_name"]],
+              type = schemas[["type"]],
+              stringsAsFactors = FALSE
+            ))
+
+        } else if (is.character(schema)) {
+          tables <- dbListObjects(dbcon, Id(schema = schema)) %>%
+            mutate(schema = schema,
+                   table_name = purrr::map_chr(table, ~slot(.x, "name")[2]),
+                   full_name = paste0(schema, ".", table_name),
+                   type = "table")
+
+          return(
+            data.frame(
+              name = tables[["table_name"]],
+              type = tables[["type"]],
+              stringsAsFactors = FALSE
+            ))
+        }
+      },
+      listColumns = function(table, schema) {
+        rs <- dbSendQuery(dbcon, paste0("SELECT * FROM ", schema, ".", table, " LIMIT 0"))
+        cols = dbColumnInfo(rs)
+        dbClearResult(rs)
+
+        return(
+          data.frame(
+            name = cols[["name"]],
+            type = cols[["type"]],
+            # type = cols[["field.type"]],
+            stringsAsFactors = FALSE
+          ))
+
+      },
+      previewObject = function(rowLimit, schema, table) {
+        # attempt to query table
+        tryCatch({
+          dbGetQuery(dbcon, paste0("SELECT * FROM ", schema, ".", table, " LIMIT ", rowLimit))
+        },
+        error=function(e) {
+          print(e$message)
+          if (grepl("permission denied for schema", e$message)) {
+            message(cat("ERROR: permission denied for schema ", schema, "\n", sep = ""))
+          } else {
+            message(e$message)
+          }
+        })
+
+      },
+      actions = list(
+        "Help" = list(
+          icon = "help",
+          callback = function() {
+            utils::browseURL("https://www.postgresql.org/docs/")
+          }
+        )
+      ),
+      connectionObject = dbcon
+    )
+  }
+}
 
 #' hopToDB
 #'
 #' A simple function to easily to the RIBBiTR (or another) remote database. The following database connection credentials must be saved to your local .Renviron file(see \link[DBI]{dbConnect}): dbname - the database name, host - the database host, port - the database port, user - your database username, password - your database password. Variables may be defined with an optional prefix seperated by and underscore (e.g. "ribbitr_dbname") to distinguish multiple connections.
 #' @param prefix an optional prefix (string) added to the front of connection credential variables to distinguish between sets of credentials.
 #' @param timezone an optional timezone parameter to help convert data from various timezones to your local time.
+#' @param hopReg Do you want to be able to view and browse this connection in the RStudio Connections Pane?
 #' @return database connection object, to be passed to other functions (e.g. \link[DBI]{dbListTables}, \link[dplyr]{tbl}, etc.).
 #' @examples
 #'
@@ -38,7 +152,7 @@
 #' @importFrom stats na.omit
 #' @importFrom dplyr tbl
 #' @export
-hopToDB = function(prefix = NA, timezone = NULL) {
+hopToDB = function(prefix = NA, timezone = NULL, hopReg = TRUE) {
   dbname = paste(na.omit(c(prefix, "dbname")), collapse = ".")
   host = paste(na.omit(c(prefix, "host")), collapse = ".")
   port = paste(na.omit(c(prefix, "port")), collapse = ".")
@@ -65,9 +179,15 @@ hopToDB = function(prefix = NA, timezone = NULL) {
     }
   })
 
+  if (is.na(prefix)) {
+    database_name = dbname
+  } else {
+    database_name = prefix
+  }
+
 
   tryCatch({
-    cat("Connecting to database... ")
+    cat("Connecting to ", database_name, "... ", sep = "")
 
     if (un == "") {
       un = rstudioapi::askForPassword("username")
@@ -78,13 +198,18 @@ hopToDB = function(prefix = NA, timezone = NULL) {
     }
 
     dbcon <- dbConnect(dbDriver("Postgres"),
-                     dbname = Sys.getenv(dbname),
-                     host = Sys.getenv(host),
-                     port = Sys.getenv(port),
-                     user = un,
-                     password = pw,
-                     timezone = timezone)
+                       dbname = Sys.getenv(dbname),
+                       host = Sys.getenv(host),
+                       port = Sys.getenv(port),
+                       user = un,
+                       password = pw,
+                       timezone = timezone)
     cat("Success!\n")
+
+    if (hopReg){
+      hopRegister(dbcon, Sys.getenv(host), database_name)
+    }
+
     return(dbcon)
   },
   error=function(cond) {

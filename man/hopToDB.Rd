@@ -4,12 +4,14 @@
 \alias{hopToDB}
 \title{hopToDB}
 \usage{
-hopToDB(prefix = NA, timezone = NULL)
+hopToDB(prefix = NA, timezone = NULL, hopReg = TRUE)
 }
 \arguments{
 \item{prefix}{an optional prefix (string) added to the front of connection credential variables to distinguish between sets of credentials.}
 
 \item{timezone}{an optional timezone parameter to help convert data from various timezones to your local time.}
+
+\item{hopReg}{Do you want to be able to view and browse this connection in the RStudio Connections Pane?}
 }
 \value{
 database connection object, to be passed to other functions (e.g. \link[DBI]{dbListTables}, \link[dplyr]{tbl}, etc.).
