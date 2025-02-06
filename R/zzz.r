@@ -30,11 +30,9 @@ check_package_version <- function(display = FALSE) {
     # Compare versions
     if (package_version(latest_version) > current_version) {
       message <- sprintf(
-        "\nA newer version of ribbitrrr is available on GitHub (%s > %s).\n%s\n%s\n",
-        latest_version, current_version,
-        "Consider updating using:",
-        "remotes::install_github('RIBBiTR-BII/ribbitrrr')"
-      )
+        "\nA newer version of ribbitrrr is available on GitHub (%s > %s).",
+        latest_version, current_version)
+
       if (display) {
         message("Update message created: ", message)
       }
@@ -71,6 +69,8 @@ check_package_version <- function(display = FALSE) {
   if (!is.null(update_message)) {
     # packageStartupMessage(update_message)
     message(update_message)
+    message("To update the ribbirrrr package, run the following command:")
+    message("\n\tremotes::install_github('RIBBiTR-BII/ribbitrrr')")
     # message("Update message displayed")
   } else {
     # message("No update message to display")
