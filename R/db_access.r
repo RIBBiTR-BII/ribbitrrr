@@ -164,18 +164,35 @@ hopRegister = function(dbcon, dbhost, dbname = NA) {
 #' @importFrom DBI dbConnect dbDriver dbListTables
 #' @importFrom RPostgres Postgres
 #' @importFrom stats na.omit
-#' @importFrom dplyr tbl
 #' @export
 hopToDB = function(prefix = NA, timezone = NULL, hopReg = TRUE) {
-  dbname = paste(na.omit(c(prefix, "dbname")), collapse = ".")
-  host = paste(na.omit(c(prefix, "host")), collapse = ".")
-  port = paste(na.omit(c(prefix, "port")), collapse = ".")
-  user = paste(na.omit(c(prefix, "user")), collapse = ".")
-  password = paste(na.omit(c(prefix, "password")), collapse = ".")
+  dbname_var = paste(na.omit(c(prefix, "dbname")), collapse = ".")
+  host_var = paste(na.omit(c(prefix, "host")), collapse = ".")
+  port_var = paste(na.omit(c(prefix, "port")), collapse = ".")
+  user_var = paste(na.omit(c(prefix, "user")), collapse = ".")
+  password_var = paste(na.omit(c(prefix, "password")), collapse = ".")
+
+  # attempt to fetch dbname
+  dbname = Sys.getenv(dbname_var)
+  if (dbname == "") {
+    stop(paste0("Specified dbname not found in .Renviron: '", dbname_var, "'"), call. = FALSE)
+  }
+
+  # attempt to fetch host
+  host = Sys.getenv(host_var)
+  if (host == "") {
+    stop(paste0("Specified host not found in .Renviron: '", host_var, "'"), call. = FALSE)
+  }
+
+  # attempt to fetch host
+  port = Sys.getenv(port_var)
+  if (port == "") {
+    stop(paste0("Specified port not found in .Renviron: '", port_var, "'"), call. = FALSE)
+  }
 
   # attempt to fetch user
   tryCatch({
-    un = Sys.getenv(user)
+    user = Sys.getenv(user_var)
   },
   error=function(e) {
     if (!grepl("object 'user' not found", e$message)) {
@@ -185,7 +202,7 @@ hopToDB = function(prefix = NA, timezone = NULL, hopReg = TRUE) {
 
   # attempt to fetch password
   tryCatch({
-    pw = Sys.getenv(password)
+    password = Sys.getenv(password_var)
   },
   error=function(e) {
     if (!grepl("object 'password' not found", e$message)) {
@@ -193,30 +210,31 @@ hopToDB = function(prefix = NA, timezone = NULL, hopReg = TRUE) {
     }
   })
 
-  if (is.na(prefix)) {
-    database_name = dbname
-  } else {
+  # use prefix for database_name if provided, otherwise dbname
+  if (!is.na(prefix)) {
     database_name = prefix
+  } else {
+    database_name = dbname
   }
 
 
   tryCatch({
     cat("Connecting to ", database_name, "... ", sep = "")
 
-    if (un == "") {
-      un = rstudioapi::askForPassword("username")
+    if (user == "") {
+      user = rstudioapi::askForPassword("Username:")
     }
 
-    if (pw == "") {
-      pw = rstudioapi::askForPassword("password")
+    if (password == "") {
+      password = rstudioapi::askForPassword("Password:")
     }
 
     dbcon <- dbConnect(dbDriver("Postgres"),
-                       dbname = Sys.getenv(dbname),
-                       host = Sys.getenv(host),
-                       port = Sys.getenv(port),
-                       user = un,
-                       password = pw,
+                       dbname = dbname,
+                       host = host,
+                       port = port,
+                       user = user,
+                       password = password,
                        timezone = timezone)
     cat("Success!\n")
 
