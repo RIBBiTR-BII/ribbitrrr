@@ -1,10 +1,16 @@
 # ribbitrrr
-## [0.0.1.7] - 2025-02-05
+## [0.0.1.7] - 2025-02-06
 ### Added
+
 - hopRegister() function for viewing and browsing connections made with hopToDB() in the RStudio Connections Pane
+
+### Changed
+
+- improved error handling for hopToDB() connection parameters
 
 ## [0.0.1.6] - 2024-12-18
 ### Added
+
 - scrape_amphibiaweb() function
 
 ## [0.0.1.5] - 2024-11-13
