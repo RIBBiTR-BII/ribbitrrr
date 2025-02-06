@@ -5,17 +5,37 @@
 #' @param dbhost database host
 #' @param dbname an identifier (string) for the connection
 #' @param dbcon DBI connection object
-#' @importFrom DBI dbListObjects dbSendQuery dbColumnInfo dbClearResult dbGetQuery dbDisconnect
-#' @importFrom dplyr filter mutate
-#' @importFrom purrr map_chr
+#' @importFrom DBI dbGetQuery dbSendQuery dbColumnInfo dbClearResult dbDisconnect
+#' @importFrom dplyr filter mutate arrange select
 #' @export
 
 hopRegister = function(dbcon, dbhost, dbname = NA) {
+  # dbname = "ribbitr"
+  # dbhost = Sys.getenv("ribbitr.host")
+
   if (is.na(dbname)) {
     connection_name = "active_connection"
   } else {
     connection_name = dbname
   }
+
+  up_query = "SELECT r.rolname AS user_name,
+  c.oid::regclass AS table_name_full,
+  p.perm AS privilege_type
+  FROM pg_class c
+  CROSS JOIN pg_roles r
+  CROSS JOIN unnest(ARRAY['SELECT','INSERT','UPDATE','DELETE','TRUNCATE','REFERENCES','TRIGGER']) p(perm)
+  WHERE relkind IN ('r', 'v')
+  AND relnamespace NOT IN (SELECT oid FROM pg_namespace WHERE nspname in ('pg_catalog','information_schema'))
+  AND has_table_privilege(rolname, c.oid, p.perm)
+  and r.rolname = current_user;"
+
+  user_priv = dbGetQuery(dbcon, up_query) %>%
+    mutate(schema_name = ifelse(grepl("\\.", table_name_full), sub("\\..*", "", table_name_full), "public"),
+           table_name = sub(".*\\.", "", table_name_full)) %>%
+    # separate(col = table_name, into = c("schema_name", "table_name"), sep = "\\.", fill = "left") %>%
+    arrange(schema_name, table_name) %>%
+    select(schema_name, table_name)
 
   # Register the connection with RStudio
   observer = getOption("connectionObserver")
@@ -42,30 +62,24 @@ hopRegister = function(dbcon, dbhost, dbname = NA) {
       listObjects = function(schema = NULL) {
 
         if (is.null(schema)) {
-          schemas = dbListObjects(dbcon) %>%
-            filter(is_prefix) %>%
-            mutate(schema_name = purrr::map_chr(table, ~slot(.x, "name")[1]),
-                   type = "schema") %>%
-            filter(!(schema_name %in% c("information_schema", "pg_catalog")))
+          schemas = unique(user_priv$schema_name)
 
           return(
             data.frame(
-              name = schemas[["schema_name"]],
-              type = schemas[["type"]],
+              name = schemas,
+              type = rep("schema", times = length(schemas)),
               stringsAsFactors = FALSE
             ))
 
         } else if (is.character(schema)) {
-          tables <- dbListObjects(dbcon, Id(schema = schema)) %>%
-            mutate(schema = schema,
-                   table_name = purrr::map_chr(table, ~slot(.x, "name")[2]),
-                   full_name = paste0(schema, ".", table_name),
-                   type = "table")
+          tables = unique(user_priv %>%
+                            filter(schema_name == schema) %>%
+                            pull(table_name))
 
           return(
             data.frame(
-              name = tables[["table_name"]],
-              type = tables[["type"]],
+              name = tables,
+              type = rep("table", times = length(tables)),
               stringsAsFactors = FALSE
             ))
         }
