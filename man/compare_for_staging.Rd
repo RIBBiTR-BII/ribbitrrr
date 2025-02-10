@@ -8,11 +8,11 @@ compare_for_staging(
   data_old,
   data_new,
   key_columns,
+  return_all = TRUE,
   insert = TRUE,
   update = TRUE,
   orphan = FALSE,
   duplicate = FALSE,
-  return_all = FALSE,
   report = FALSE
 )
 }
@@ -23,6 +23,8 @@ compare_for_staging(
 
 \item{key_columns}{A character vector of key columns used to distinguish "insert", "update", and "orphan" rows. Can be a primary key or natural key, depending on needs.}
 
+\item{return_all}{Logical: do you want to perform all comparisons (insert, update, orphan, duplicate)? Overrides previous logical parmeters. False by default.}
+
 \item{insert}{Logical: do you want to check for new rows to insert? TRUE by default.}
 
 \item{update}{Logical: do you want to check for new rows to update? TRUE by default.}
@@ -30,8 +32,6 @@ compare_for_staging(
 \item{orphan}{Logical: do you want to check for orphan rows in the old data? FALSE by default.}
 
 \item{duplicate}{Logical: do you want to check for duplicate rows? FALSE by default.}
-
-\item{return_all}{Logical: do you want to perform all comparisons (insert, update, orphan, duplicate)? Overrides previous logical parmeters. False by default.}
 
 \item{report}{String name for report if desired. If provided, function will announce the lengths of all provided outputs.}
 }

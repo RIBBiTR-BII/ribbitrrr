@@ -4,11 +4,11 @@
 #' @param data_old A reference data frame containing the existing data
 #' @param data_new A data frame containing the new data to be compared with the existing data
 #' @param key_columns A character vector of key columns used to distinguish "insert", "update", and "orphan" rows. Can be a primary key or natural key, depending on needs.
+#' @param return_all Logical: do you want to perform all comparisons (insert, update, orphan, duplicate)? Overrides previous logical parmeters. False by default.
 #' @param insert Logical: do you want to check for new rows to insert? TRUE by default.
 #' @param update Logical: do you want to check for new rows to update? TRUE by default.
 #' @param orphan Logical: do you want to check for orphan rows in the old data? FALSE by default.
 #' @param duplicate Logical: do you want to check for duplicate rows? FALSE by default.
-#' @param return_all Logical: do you want to perform all comparisons (insert, update, orphan, duplicate)? Overrides previous logical parmeters. False by default.
 #' @param report String name for report if desired. If provided, function will announce the lengths of all provided outputs.
 #' @return A list of dataframes containing rows corresponding to each comparison (insert, update, orphan, duplicate)
 #' @examples
@@ -24,7 +24,7 @@
 #' @importFrom dplyr %>% bind_rows anti_join group_by_at count ungroup mutate filter select inner_join
 #' @export
 #'
-compare_for_staging = function(data_old, data_new, key_columns, insert=TRUE, update=TRUE, orphan=FALSE, duplicate=FALSE, return_all=FALSE, report=FALSE){
+compare_for_staging = function(data_old, data_new, key_columns, return_all=TRUE, insert=TRUE, update=TRUE, orphan=FALSE, duplicate=FALSE, report=FALSE){
 
   # Check for key column duplicates
   old_dups = nrow(data_old %>%
@@ -149,7 +149,7 @@ compare_for_staging = function(data_old, data_new, key_columns, insert=TRUE, upd
 #'
 #' comparison <- compare_for_staging(data_old, data_new, key_columns = c("id"), return_all = TRUE)
 #' update_diffs <- compare_updates(comparison)
-#' @importFrom dplyr %>% bind_rows anti_join group_by_at count ungroup mutate filter select inner_join
+#' @importFrom dplyr %>% rename
 #' @export
 #'
 compare_updates = function(cfs_results) {
@@ -157,27 +157,47 @@ compare_updates = function(cfs_results) {
   df1 = cfs_results$update
   df2 = cfs_results$update_old
 
-  diffs_by_col = list()
-  # Compare the contents of each column
-  for (col in names(df1)) {
-    # Use is.na() to handle NA values and compare non-NA values
-    if (!identical(is.na(df1[[col]]), is.na(df2[[col]])) ||
-        !all(df1[[col]] == df2[[col]], na.rm = TRUE)) {
-      print(paste("\nDifferences found in column '", col, "':", sep = ""))
+  if (nrow(df1) == 0) {
+    warning("No updates found.")
+    return(NULL)
+  } else {
 
-      # Create a logical vector for differences, considering NA values
-      diff_mask <- is.na(df1[[col]]) != is.na(df2[[col]]) |
-        ((!is.na(df1[[col]]) & !is.na(df2[[col]])) & (df1[[col]] != df2[[col]]))
+    diffs_by_col = list()
+    # Compare the contents of each column
+    for (col in names(df1)) {
+      # Use is.na() to handle NA values and compare non-NA values
+      if (!identical(is.na(df1[[col]]), is.na(df2[[col]])) ||
+          !all(df1[[col]] == df2[[col]], na.rm = TRUE)) {
 
-      diff_df <- data.frame(
-        new_data = df1[[col]][diff_mask],
-        old_data = df2[[col]][diff_mask],
-        row = which(diff_mask)
-      )
-      diffs_by_col[[col]] = diff_df
+        # Create a logical vector for differences, considering NA values
+        diff_mask <- is.na(df1[[col]]) != is.na(df2[[col]]) |
+          ((!is.na(df1[[col]]) & !is.na(df2[[col]])) & (df1[[col]] != df2[[col]]))
+
+        diff_df <- data.frame(
+          new_data = df1[[col]][diff_mask],
+          old_data = df2[[col]][diff_mask],
+          row = which(diff_mask)
+        )
+
+        diff_df = diff_df %>%
+          rename(setNames("new_data", paste0(col, "_new")),
+                 setNames("old_data", paste0(col, "_old")))
+
+        diffs_by_col[[col]] = diff_df
+      }
     }
+
+    difcols = names(diffs_by_col)
+    if (length(difcols > 0)) {
+      message("Differences found in columns:")
+      for (ii in difcols) {
+        message(paste0("\t", ii))
+      }
+    }
+
+
+    return(diffs_by_col)
   }
-  return(diffs_by_col)
 }
 
 
