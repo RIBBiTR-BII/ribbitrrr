@@ -1,23 +1,25 @@
-#' hopRegister
-#'
-#' Register connection in RStudio Connections Pane
-#' @param dbcon DBI database connection object
-#' @param dbhost database host
-#' @param dbname an identifier (string) for the connection
-#' @param dbcon DBI connection object
-#' @importFrom DBI dbGetQuery dbSendQuery dbColumnInfo dbClearResult dbDisconnect
-#' @importFrom dplyr filter mutate arrange select
-#' @export
+conn_session_context <- new.env(parent = emptyenv())
 
-hopRegister = function(dbcon, dbhost, dbname = NA) {
-  # dbname = "ribbitr"
-  # dbhost = Sys.getenv("ribbitr.host")
+#' @keywords internal
+conn_session_set <- function(id, vals = list()) {
+  conn_session_context[[id]] <- vals
+}
 
-  if (is.na(dbname)) {
-    connection_name = "active_connection"
-  } else {
-    connection_name = dbname
+#' @keywords internal
+conn_session_get <- function(id) {
+  if (id == "") {
+    return(NULL)
   }
+  conn <- conn_session_context[[id]]
+  if (is.null(conn)) {
+    stop("No metadata was found for this connection")
+  } else {
+    conn
+  }
+}
+
+#' @keywords internal
+hopRegister = function(dbcon, dbhost, dbname, connection_id, type) {
 
   up_query = "SELECT r.rolname AS user_name,
   c.oid::regclass AS table_name_full,
@@ -37,93 +39,88 @@ hopRegister = function(dbcon, dbhost, dbname = NA) {
     arrange(schema_name, table_name) %>%
     select(schema_name, table_name)
 
-  # Register the connection with RStudio
-  observer = getOption("connectionObserver")
-  if (!is.null(observer)) {
-    observer$connectionOpened(
-      type = "PostgreSQL",
-      host = dbhost,
-      displayName = connection_name,
-      icon = system.file("icons", "postgres.png", package = "RPostgres"),
-      connectCode = paste0("ribbitrrr::hopToDB('", dbname, "')"),
-      disconnect = function() {
-        observer <- getOption("connectionObserver")
-        if (!is.null(observer))
-          observer$connectionClosed("PostgreSQL", dbhost)
-        dbDisconnect(dbcon)
-        },
-      listObjectTypes = function() {
-        list(
-          schema = list(
-            contains = list(table = list(contains = "data"),
-                            view = list(contains = "data")))
-        )
-      },
-      listObjects = function(schema = NULL) {
+  session <- conn_session_get(connection_id)
+  if (is.null(session)) {
+    name <- as.character(dbname)
+    host <- as.character(dbhost)
+    type <- as.character(type)
+  } else {
+    name <- session$name
+    host <- session$host
+    type <- session$type
+  }
 
-        if (is.null(schema)) {
-          schemas = unique(user_priv$schema_name)
+  spec_contract <- rscontract_spec(
+    type = type,
+    name = name,
+    host = host,
+    connect_script = paste0("ribbitrrr::hopToDB('", dbname, "')"),
+    disconnect_code = function() {
+      rscontract_close(host = host, type = type)
+      dbDisconnect(dbcon)
+    },
+    object_types = function() {
+      list(
+        schema = list(
+          contains = list(table = list(contains = "data"),
+                          view = list(contains = "data")))
+      )
+    },
+    object_list = function(schema = NULL) {
 
-          return(
-            data.frame(
-              name = schemas,
-              type = rep("schema", times = length(schemas)),
-              stringsAsFactors = FALSE
-            ))
-
-        } else if (is.character(schema)) {
-          tables = unique(user_priv %>%
-                            filter(schema_name == schema) %>%
-                            pull(table_name))
-
-          return(
-            data.frame(
-              name = tables,
-              type = rep("table", times = length(tables)),
-              stringsAsFactors = FALSE
-            ))
-        }
-      },
-      listColumns = function(table, schema) {
-        rs <- dbSendQuery(dbcon, paste0("SELECT * FROM ", schema, ".", table, " LIMIT 0"))
-        cols = dbColumnInfo(rs)
-        dbClearResult(rs)
+      if (is.null(schema)) {
+        schemas = unique(user_priv$schema_name)
 
         return(
           data.frame(
-            name = cols[["name"]],
-            type = cols[["type"]],
-            # type = cols[["field.type"]],
+            name = schemas,
+            type = rep("schema", times = length(schemas)),
             stringsAsFactors = FALSE
           ))
 
-      },
-      previewObject = function(rowLimit, schema, table) {
-        # attempt to query table
-        tryCatch({
-          dbGetQuery(dbcon, paste0("SELECT * FROM ", schema, ".", table, " LIMIT ", rowLimit))
-        },
-        error=function(e) {
-          print(e$message)
-          if (grepl("permission denied for schema", e$message)) {
-            message(cat("ERROR: permission denied for schema ", schema, "\n", sep = ""))
-          } else {
-            message(e$message)
-          }
-        })
+      } else if (is.character(schema)) {
+        tables = unique(user_priv %>%
+                          filter(schema_name == schema) %>%
+                          pull(table_name))
 
+        return(
+          data.frame(
+            name = tables,
+            type = rep("table", times = length(tables)),
+            stringsAsFactors = FALSE
+          ))
+      }
+    },
+    object_columns = function(table, schema) {
+      rs <- dbSendQuery(dbcon, paste0("SELECT * FROM ", schema, ".", table, " LIMIT 0"))
+      cols = dbColumnInfo(rs)
+      dbClearResult(rs)
+
+      return(
+        data.frame(
+          name = cols[["name"]],
+          type = cols[["type"]],
+          stringsAsFactors = FALSE
+        ))
+
+    },
+    preview_code = function(rowLimit, schema, table) {
+      # attempt to query table
+      tryCatch({
+        dbGetQuery(dbcon, paste0("SELECT * FROM ", schema, ".", table, " LIMIT ", rowLimit))
       },
-      actions = list(
-        "Help" = list(
-          icon = "help",
-          callback = function() {
-            utils::browseURL("https://www.postgresql.org/docs/")
-          }
-        )
-      ),
-      connectionObject = dbcon
-    )
-  }
+      error=function(e) {
+        print(e$message)
+        if (grepl("permission denied for schema", e$message)) {
+          message(cat("ERROR: permission denied for schema ", schema, "\n", sep = ""))
+        } else {
+          message(e$message)
+        }
+      })
+    }
+  )
+  rscontract_open(spec_contract)
+
 }
 
 #' hopToDB
@@ -166,6 +163,7 @@ hopRegister = function(dbcon, dbhost, dbname = NA) {
 #' @importFrom stats na.omit
 #' @export
 hopToDB = function(prefix = NA, timezone = NULL, hopReg = TRUE) {
+  drv = dbDriver("Postgres")
   dbname_var = paste(na.omit(c(prefix, "dbname")), collapse = ".")
   host_var = paste(na.omit(c(prefix, "host")), collapse = ".")
   port_var = paste(na.omit(c(prefix, "port")), collapse = ".")
@@ -219,7 +217,7 @@ hopToDB = function(prefix = NA, timezone = NULL, hopReg = TRUE) {
 
 
   tryCatch({
-    cat("Connecting to ", database_name, "... ", sep = "")
+    cat("Connecting to '", database_name, "'... ", sep = "")
 
     if (user == "") {
       user = rstudioapi::askForPassword(paste0("Username for '", database_name, "':"))
@@ -229,7 +227,7 @@ hopToDB = function(prefix = NA, timezone = NULL, hopReg = TRUE) {
       password = rstudioapi::askForPassword(paste0("Password for '", database_name, "':"))
     }
 
-    dbcon <- dbConnect(dbDriver("Postgres"),
+    dbcon <- dbConnect(drv,
                        dbname = dbname,
                        host = host,
                        port = port,
@@ -239,7 +237,25 @@ hopToDB = function(prefix = NA, timezone = NULL, hopReg = TRUE) {
     cat("Success!\n")
 
     if (hopReg){
-      hopRegister(dbcon, Sys.getenv(host), database_name)
+      id <- uuid::UUIDgenerate()
+
+      pkg <- attributes(class(drv))$package
+      libraries <- list("connections")
+      if (!is.null(pkg)) libraries <- c(libraries, pkg)
+
+      meta_data <- list(
+        name = database_name,
+        host = host,
+        port = port,
+        user = user,
+        timezone = timezone,
+        libraries = libraries,
+        type = as.character(class(dbcon))
+      )
+
+      conn_session_set(id, meta_data)
+
+      hopRegister(dbcon, host, database_name, id, type)
     }
 
     return(dbcon)
@@ -247,6 +263,14 @@ hopToDB = function(prefix = NA, timezone = NULL, hopReg = TRUE) {
   error=function(cond) {
     message("\nUnable to connect: ", cond$message,  "\n")
   })
+}
+
+#' @keywords internal
+check_ambig_table_name = function(tbl_name, mdc) {
+  schemas = unique(mdc %>% filter(table_name == "capture") %>% pull(table_schema))
+  if (length(schemas) > 1) {
+    stop(paste0("Multiple tables named '", tbl_name, "' found, in schemas: ", paste(schemas, collapse = ", "), ".\n\tResults are ambiguous. Try filtering metadata_columns to the schema of interest.\n"))
+  }
 }
 
 #' @keywords internal
