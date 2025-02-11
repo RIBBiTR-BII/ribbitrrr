@@ -245,26 +245,18 @@ stage_to_temp <- function(dbcon, reference_table, novel_data) {
     dbExecute(dbcon, paste0("DROP TABLE IF EXISTS ", temp_table_name, ";"))
   )
 
-  dbBegin(dbcon)
-  tryCatch({
-    # copy reference table to temporary table
-    dbExecute(dbcon, paste0("CREATE TEMP TABLE ", temp_table_name, " AS SELECT * FROM ", schema_name, ".", table_name, ";"))
-    # drop all existing rows
-    dbExecute(dbcon, paste0("TRUNCATE TABLE ", temp_table_name))
-    # drop all columns in reference_table not in novel_data
-    drop_cols = setdiff(ref_cols, nov_cols)
-    if (length(drop_cols) > 0){
-      dbExecute(dbcon, paste0("ALTER TABLE ", temp_table_name, " DROP COLUMN ", paste(drop_cols, collapse = ", DROP COLUMN ")))
-    }
-    # write all novel data to temp table
-    dbWriteTable(dbcon, name = temp_table_name, value = novel_data, append = TRUE)
+  # copy reference table to temporary table
+  dbExecute(dbcon, paste0("CREATE TEMP TABLE ", temp_table_name, " AS SELECT * FROM ", schema_name, ".", table_name, ";"))
+  # drop all existing rows
+  dbExecute(dbcon, paste0("TRUNCATE TABLE ", temp_table_name))
+  # drop all columns in reference_table not in novel_data
+  drop_cols = setdiff(ref_cols, nov_cols)
+  if (length(drop_cols) > 0){
+    dbExecute(dbcon, paste0("ALTER TABLE ", temp_table_name, " DROP COLUMN ", paste(drop_cols, collapse = ", DROP COLUMN ")))
+  }
+  # write all novel data to temp table
+  dbWriteTable(dbcon, name = temp_table_name, value = novel_data, append = TRUE)
 
-    dbCommit(dbcon)
-  },
-  error=function(e) {
-    dbRollback(dbcon)
-    message("Transaction failed: ", e$message)
-  })
 
   return(temp_table_name)
 }
