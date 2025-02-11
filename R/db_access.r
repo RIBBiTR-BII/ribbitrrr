@@ -222,11 +222,11 @@ hopToDB = function(prefix = NA, timezone = NULL, hopReg = TRUE) {
     cat("Connecting to ", database_name, "... ", sep = "")
 
     if (user == "") {
-      user = rstudioapi::askForPassword("Username:")
+      user = rstudioapi::askForPassword(paste0("Username for '", database_name, "':"))
     }
 
     if (password == "") {
-      password = rstudioapi::askForPassword("Password:")
+      password = rstudioapi::askForPassword(paste0("Password for '", database_name, "':"))
     }
 
     dbcon <- dbConnect(dbDriver("Postgres"),
