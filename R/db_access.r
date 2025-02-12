@@ -19,6 +19,7 @@ conn_session_get <- function(id) {
 }
 
 #' @keywords internal
+#' @importFrom rscontract rscontract_spec rscontract_close
 hopRegister = function(dbcon, dbhost, dbname, connection_id, type) {
 
   up_query = "SELECT r.rolname AS user_name,
