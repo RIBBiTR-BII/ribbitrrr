@@ -174,7 +174,7 @@ hopToDB = function(prefix = NA, timezone = NULL, hopReg = TRUE) {
   # attempt to fetch dbname
   dbname = Sys.getenv(dbname_var)
   if (dbname == "") {
-    stop(paste0("Specified dbname not found in .Renviron: '", dbname_var, "'"), call. = FALSE)
+    stop(paste0("Specified dbname not found in .Renviron: '", dbname_var, "'. Have these database parameters been set up?"), call. = FALSE)
   }
 
   # attempt to fetch host

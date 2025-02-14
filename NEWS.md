@@ -1,5 +1,5 @@
 # ribbitrrr
-## [0.0.1.7] - 2025-02-06
+## [0.0.2.0] - 2025-02-14
 ### Added
 
 - hopRegister() function for viewing and browsing connections made with hopToDB() in the RStudio Connections Pane
