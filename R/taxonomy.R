@@ -82,3 +82,72 @@ scrape_amphibiaweb <- function(sci_nam, quietly = FALSE) {
   results <- map_df(sci_nam, process_name)
   return(results)
 }
+
+#' Scrape taxa metadata from CITES
+#'
+#' Searches scientific names for entries and status listing of species in CITES db
+#' @param sci_nam Scientific name(s) of species of interest
+#' @param authentication_token token for CITES api
+#' @param quietly TRUE/FALSE, do you want to print each query?
+#' @return Associated metadata (if any)
+#' @examples
+#' scientific_names <- c("Rana muscosa", "Oedipina gracilis")
+#' cites_token = "abcdefg"
+#' results <- scrape_cites(scientific_names, cites_token)
+#' print(results)
+#' @importFrom httr GET add_headers
+#' @importFrom jsonlite fromJSON
+#' @importFrom purrr map_df
+#' @importFrom dplyr tibble
+#' @export
+
+scrape_cites <- function(sci_nam, authentication_token, quietly = FALSE) {
+  if (is.null(authentication_token)) {
+    stop("authentication_token required.")
+  }
+
+  base_url <- "https://api.speciesplus.net/api/v1/taxon_concepts.xml?name={taxon}"
+
+  process_name <- function(name_submitted, token = authentication_token) {
+
+    if (!quietly) {
+      cat("\033[38;5;240m", "Processing -- ", name_submitted, "\n")
+    }
+
+    # Initialize result tibble with default NA values
+    result <- tibble(
+      name_submitted = name_submitted,
+      cites_id = NA,
+      cites_appendix = NA
+    )
+
+    # Attempt CITES scrape
+    tryCatch({
+      name_submitted = gsub("_", " ", name_submitted)
+
+      response <- GET(
+        url = "https://api.speciesplus.net/api/v1/taxon_concepts",
+        query = list(name = name_submitted),
+        add_headers("X-Authentication-Token" = token)
+      )
+
+      # Parse JSON content
+      content <- fromJSON(rawToChar(response$content))
+
+      res = content[["taxon_concepts"]][["cites_listings"]][[1]]
+
+      result$cites_id <- res$id
+      result$cites_appendix <- res$appendix
+
+    }, error = function(e) {
+      if (!quietly) {
+        warning(paste("CITES scraping failed for", name_submitted, ":", e$message))
+      }
+    })
+
+    return(result)
+  }
+
+  results <- map_df(sci_nam, process_name)
+  return(results)
+}
