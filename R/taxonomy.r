@@ -151,3 +151,118 @@ scrape_cites <- function(sci_nam, authentication_token, quietly = FALSE) {
   results <- map_df(sci_nam, process_name)
   return(results)
 }
+
+comment_taxa_dict = list("chiasmocleis_cf._atlantica" = "chiasmocleis_cf._atlantica",
+                         'ischnocnema_sp._02_(aff._lactea)' = 'ischnocnema_sp._02_(aff._lactea)',
+                         'ololygon_aff._brieni' = 'ololygon_aff._brieni',
+                         'ololygon_aff._littoralis' = 'ololygon_aff._littoralis',
+                         'ololygon_cf_litoralis' = 'ololygon_cf_litoralis',
+                         "pristimantis_sp._potential_new_sp" = "potential new species",
+                         'rana_catesbeiana_x_rana_clamitans_(possibly)' = 'Rana_catesbeiana or Rana_clamitans',
+                         "tadpole_species_1" = "tadpole species 1",
+                         "tad_spp_2" = "tadpole species 2")
+
+clean_taxa_dict <- list(
+  'boana_platenera' = 'boana_platanera',
+  'bolitoglossa_spp' = 'bolitoglossa',
+  'boana_bandeirante' = 'boana_bandeirantes',
+  'brachycephalus_sp' = 'brachycephalus',
+  'brachycephalus_sp.' = 'brachycephalus',
+  'bufo_americanus' = 'anaxyrus_americanus',
+  'bufo_sp.' = 'bufo',
+  'caecilia_spp' = 'caecilia',
+  'chiasmocleis_cf._atlantica' = 'chiasmocleis',
+  'cochranella_spp' = 'cochranella',
+  'colostethus_panamensis' = 'colostethus_panamansis',
+  'craugastor_spp' = 'craugastor',
+  'cycloramphus_sp.' = 'cycloramphus',
+  'dendrophryniscus_haddadi' = 'dendropsophus_haddadi',
+  'desmog_spp' = 'desmognathus',
+  'desmog_spp.' = 'desmognathus',
+  'desmoganthus_sp.' = 'desmognathus',
+  'desmognathus_so' = 'desmognathus',
+  'Desmognathaus_sp.' = 'desmognathus',
+  'desmognathus_sp.' = 'desmognathus',
+  'desmongnathus_sp' = 'desmognathus',
+  'diasporus_spp' = 'diasporus',
+  'diasporus_spp.' = 'diasporus',
+  'duellmanohyla_spp' = 'duellmanohyla',
+  'esparadana_prosoblepon' = 'espadarana_prosoblepon',
+  'eurycea_bislaneata' = 'eurycea_bislineata',
+  'hyalinobatrachium_fleishmanni' = 'hyalinobatrachium_fleischmanni',
+  'hyalinobatrachium_spp' = 'hyalinobatrachium',
+  'hyliola_regilla' = 'pseudacris_regilla',
+  'ischnocnema_sp' = 'ischnocnema',
+  'ischnocnema_sp._02_(aff._lactea)' = 'ischnocnema',
+  'larval_salamander_sp.' = 'caudata',
+  'leptodactylus_marmoratus' = 'adenomera_marmorata',
+  'leptodactylus_spp' = 'leptodactylus',
+  'lithobates_sylvaticus' = 'rana_sylvatica',
+  'ololygon_aff._brieni' = 'ololygon',
+  'ololygon_aff._littoralis' = 'ololygon',
+  'ololygon_cf_litoralis' = 'ololygon',
+  'physalaemus_sp' = 'physalaemus',
+  'plethodon_glutinosis' = 'plethodon_glutinosus',
+  'pristimantis_sp._potential_new_sp' = 'pristimantis',
+  'pristimantis_spp' = 'pristimantis',
+  'rana_catesbeiana_x_rana_clamitans_(possibly)' = 'rana',
+  'rana_sp' = 'rana',
+  'rana_spp' = 'rana',
+  'red_backed_salamander' = 'plethodon_cinereus',
+  'see_notes'= NA_character_,
+  'silverstoneia_spp' = 'silverstoneia',
+  'scinax_crospedopilus' = 'scinax_crospedospilus',
+  'smilisca_spp' = 'smilisca',
+  'tad_spp_2' = 'anura',
+  'tadpole_species_1' = 'anura',
+  'toad_sp.' = 'bufonidae',
+  'unknown' = NA_character_,
+  'unknown_species' = NA_character_,
+  'uptidactylus_sarajay' = 'leptodactylus_savagei'
+)
+
+
+#' Systematically clean taxa names
+#'
+#' References a dictionary to remap taxa names, adding comments where needed.
+#' @param data data frame with taxa data
+#' @param taxon_column column with taxon names
+#' @param comment_column optional column, for remapping some taxon details to comments prior to cleaning
+#' @return Data frame with cleaned taxa
+#' @examples
+#' # example data
+#' my_data <- tibble(
+#'   taxa_names = c("desmog_spp", "rana_muscosa", "pristimantis_sp._potential_new_sp", "ololygon_aff._littoralis"),
+#'   comments = c(NA, "very cute", NA, "got away"),
+#'   other_data = c(1, 3, 5, 7)
+#' )
+#' clean_data = my_data %>%
+#'   ribbitr_clean_taxa(taxa_names, comments)
+#' @importFrom dplyr %>% mutate
+#' @importFrom rlang enquo quo_is_null
+#' @export
+ribbitr_clean_taxa <- function(data, taxon_column, comment_column = NULL) {
+  taxon_col_sym <- enquo(taxon_column)
+
+  data_out <- data %>%
+    mutate(!!taxon_col_sym := tolower(gsub(" ", "_", !!taxon_col_sym)))
+
+  if (!quo_is_null(enquo(comment_column))) {
+    comment_col_sym <- enquo(comment_column)
+    data_out <- data_out %>%
+      mutate(!!comment_col_sym := ifelse(!!taxon_col_sym %in% names(comment_taxa_dict),
+                                         ifelse(is.na(!!comment_col_sym),
+                                                as.character(comment_taxa_dict[as.character(!!taxon_col_sym)]),
+                                                as.character(paste(!!comment_col_sym,
+                                                                   comment_taxa_dict[as.character(!!taxon_col_sym)],
+                                                                   sep = "; "))),
+                                         !!comment_col_sym))
+  }
+
+  data_out <- data_out %>%
+    mutate(!!taxon_col_sym := as.character(ifelse(!!taxon_col_sym %in% names(clean_taxa_dict),
+                                                  clean_taxa_dict[as.character(!!taxon_col_sym)],
+                                                  !!taxon_col_sym)))
+
+  return(data_out)
+}

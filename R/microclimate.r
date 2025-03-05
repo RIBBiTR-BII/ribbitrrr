@@ -42,7 +42,6 @@ as_timestamptz_vec = function(date, time, timezone, tz_out = NA) {
   output = pmap_vec(list(date, time, timezone),
            ~ ymd_hms(paste0(..1, " ", ..2), tz = ..3))
 
-
   if (!is.na(first(tz_out))) {
     output = local_time_vec(output, local_tz = tz_out, drop_tz = FALSE)
   }
