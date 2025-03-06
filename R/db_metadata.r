@@ -341,8 +341,8 @@ get_query_metadata <- function(lazy_tbl, dbcon = NULL, column_metadata = NULL) {
   if (!is.null(dbcon)) {
     mdc = tbl(dbcon, Id("public", "all_columns")) %>%
       collect()
-  } else if (!is.null(metadata_columns)) {
-    mdc = metadata_columns
+  } else if (!is.null(column_metadata)) {
+    mdc = column_metadata
   }
 
   # finally, join with metadata_columns
