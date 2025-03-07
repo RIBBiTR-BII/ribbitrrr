@@ -156,9 +156,8 @@ report_metadata_changes <- function(dbcon, schema, table_metadata=TRUE, column_m
 
 #' Extract column metadata from a dbplyr lazy table object
 #'
-#' @param lazy_tbl A dbplyr lazy table object
 #' @param dbcon DBI database connection object
-#' @param column_metadata previously fetched column metadata
+#' @param lazy_tbl A dbplyr lazy table object
 #' @return A dataframe with schema_name, table_name, and column_name for each output column
 #' @export
 get_query_metadata <- function(dbcon, lazy_tbl) {

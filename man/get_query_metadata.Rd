@@ -10,8 +10,6 @@ get_query_metadata(dbcon, lazy_tbl)
 \item{dbcon}{DBI database connection object}
 
 \item{lazy_tbl}{A dbplyr lazy table object}
-
-\item{column_metadata}{previously fetched column metadata}
 }
 \value{
 A dataframe with schema_name, table_name, and column_name for each output column
