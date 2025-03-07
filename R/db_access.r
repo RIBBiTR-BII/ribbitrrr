@@ -19,6 +19,7 @@ conn_session_get <- function(id) {
 }
 
 #' @keywords internal
+#' @importFrom dplyr %>% mutate arrange select
 #' @importFrom rscontract rscontract_spec rscontract_close rscontract_open
 hopRegister = function(dbcon, dbhost, dbname, connection_id, type) {
 

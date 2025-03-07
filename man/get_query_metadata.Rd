@@ -4,12 +4,12 @@
 \alias{get_query_metadata}
 \title{Extract column metadata from a dbplyr lazy table object}
 \usage{
-get_query_metadata(lazy_tbl, dbcon = NULL, column_metadata = NULL)
+get_query_metadata(dbcon, lazy_tbl)
 }
 \arguments{
-\item{lazy_tbl}{A dbplyr lazy table object}
-
 \item{dbcon}{DBI database connection object}
+
+\item{lazy_tbl}{A dbplyr lazy table object}
 
 \item{column_metadata}{previously fetched column metadata}
 }

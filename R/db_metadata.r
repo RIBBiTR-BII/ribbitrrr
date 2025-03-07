@@ -161,14 +161,7 @@ report_metadata_changes <- function(dbcon, schema, table_metadata=TRUE, column_m
 #' @param column_metadata previously fetched column metadata
 #' @return A dataframe with schema_name, table_name, and column_name for each output column
 #' @export
-get_query_metadata <- function(lazy_tbl, dbcon = NULL, column_metadata = NULL) {
-  if (is.null(dbcon) & is.null(column_metadata)) {
-    warning("Neither database connection (dbcon) nor column_metadata provided. Returning column names only.")
-  }
-
-  if (!is.null(dbcon) & is.null(!column_metadata)) {
-    warning("Both database connection (dbcon) and column_metadata provided. Using database connection.")
-  }
+get_query_metadata <- function(dbcon, lazy_tbl) {
 
   # Function to extract table name parts from dbplyr_table_path
   extract_table_parts <- function(table_path) {
@@ -336,21 +329,14 @@ get_query_metadata <- function(lazy_tbl, dbcon = NULL, column_metadata = NULL) {
   result <- unique(result)
 
   # identify metadata source
-  mdc = NULL
+  mdc = tbl(dbcon, Id("public", "all_columns")) %>%
+    collect()
 
-  if (!is.null(dbcon)) {
-    mdc = tbl(dbcon, Id("public", "all_columns")) %>%
-      collect()
-  } else if (!is.null(column_metadata)) {
-    mdc = column_metadata
-  }
 
   # finally, join with metadata_columns
-  if (!is.null(mdc)) {
-    result = result %>%
-      left_join(mdc, by = c("schema_name" = "table_schema", "table_name", "column_name"))
-  }
+  result_final = result %>%
+    left_join(mdc, by = c("schema_name" = "table_schema", "table_name", "column_name"))
 
 
-  return(result)
+  return(result_final)
 }
