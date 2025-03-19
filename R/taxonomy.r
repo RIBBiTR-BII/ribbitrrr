@@ -208,7 +208,7 @@ clean_taxa_dict <- list(
   'hyalinobatrachium_spp' = 'hyalinobatrachium',
   'hyllodes_asper' = 'hylodes_asper',
   'hyliola_regilla' = 'pseudacris_regilla',
-  'hylodes_phyllodes' = 'hyllodes_phyllodes',
+  'hyllodes_phyllodes' = 'hylodes_phyllodes',
   'ischnocnema_cf._lactea' = 'ischnocnema',
   'ischnocnema__henselii' = 'ischnocnema_henselii',
   'ischnocnema_sp' = 'ischnocnema',
