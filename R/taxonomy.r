@@ -464,7 +464,7 @@ ribbitr_taxa_lookup_single = function(taxa, itis = TRUE, ncbi = TRUE, gbif = TRU
 #' @param iucn do you want to query IUCN?
 #' @param cites do you want to query CITES?
 #' @param cites_token CITES API token, required to query CITES.
-#' @param output how do you want the output formatted: "full" returns everything; "simplified" returns less, "simple" returns even less.
+#' @param format how do you want the output formatted: "full" returns everything; "simplified" returns less, "simple" returns even less.
 #' @return table of results for submitted taxa
 #' @examples
 #' # example data
@@ -478,7 +478,7 @@ ribbitr_taxa_lookup_single = function(taxa, itis = TRUE, ncbi = TRUE, gbif = TRU
 #' @importFrom dplyr %>% mutate rename select any_of
 #' @importFrom purrr map_df
 #' @export
-ribbitr_taxa_lookup = function(taxa, itis = TRUE, ncbi = TRUE, gbif = TRUE, iucn = TRUE, cites = FALSE, cites_token = NA, output = "full") {
+ribbitr_taxa_lookup = function(taxa, itis = TRUE, ncbi = TRUE, gbif = TRUE, iucn = TRUE, cites = FALSE, cites_token = NA, format = "full") {
   if (class(taxa) != "character") {
     stop("taxa must be a sting or character vector.")
   }
@@ -489,7 +489,7 @@ ribbitr_taxa_lookup = function(taxa, itis = TRUE, ncbi = TRUE, gbif = TRUE, iucn
     output = map_df(taxa, ~ ribbitr_taxa_lookup_single(.x, itis = itis, ncbi = ncbi, gbif = gbif, iucn = iucn, cites = cites, cites_token = cites_token))
   }
 
-  if (output %in% c("simplified", "simple")) {
+  if (format %in% c("simplified", "simple")) {
     output = output %>%
       mutate("amphibiaweb_species" = ifelse(is.na(aw_species), NA, paste(aw_genus, aw_species)),
              "amphibiaweb_class" = ifelse(is.na(aw_species), NA, "Amphibia"),

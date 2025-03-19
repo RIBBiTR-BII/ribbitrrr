@@ -12,11 +12,11 @@ ribbitr_taxa_lookup(
   iucn = TRUE,
   cites = FALSE,
   cites_token = NA,
-  output = "full"
+  format = "full"
 )
 }
 \arguments{
-\item{taxa}{data frame with taxa data}
+\item{taxa}{character vector (or sting) of taxa names to be looked up}
 
 \item{itis}{do you want to query ITIS?}
 
@@ -30,7 +30,7 @@ ribbitr_taxa_lookup(
 
 \item{cites_token}{CITES API token, required to query CITES.}
 
-\item{output}{how do you want the output formatted: "full" returns everything; "simplified" returns less, "simple" returns even less.}
+\item{format}{how do you want the output formatted: "full" returns everything; "simplified" returns less, "simple" returns even less.}
 }
 \value{
 table of results for submitted taxa
