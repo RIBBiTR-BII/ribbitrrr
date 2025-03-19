@@ -12,7 +12,7 @@ ribbitr_taxa_lookup(
   iucn = TRUE,
   cites = FALSE,
   cites_token = NA,
-  clean_output = FALSE
+  output = "full"
 )
 }
 \arguments{
@@ -29,6 +29,8 @@ ribbitr_taxa_lookup(
 \item{cites}{do you want to query CITES?}
 
 \item{cites_token}{CITES API token, required to query CITES.}
+
+\item{output}{how do you want the output formatted: "full" returns everything; "simplified" returns less, "simple" returns even less.}
 }
 \value{
 table of results for submitted taxa

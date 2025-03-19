@@ -464,6 +464,7 @@ ribbitr_taxa_lookup_single = function(taxa, itis = TRUE, ncbi = TRUE, gbif = TRU
 #' @param iucn do you want to query IUCN?
 #' @param cites do you want to query CITES?
 #' @param cites_token CITES API token, required to query CITES.
+#' @param output how do you want the output formatted: "full" returns everything; "simplified" returns less, "simple" returns even less.
 #' @return table of results for submitted taxa
 #' @examples
 #' # example data
@@ -477,7 +478,7 @@ ribbitr_taxa_lookup_single = function(taxa, itis = TRUE, ncbi = TRUE, gbif = TRU
 #' @importFrom dplyr %>% mutate rename select any_of
 #' @importFrom purrr map_df
 #' @export
-ribbitr_taxa_lookup = function(taxa, itis = TRUE, ncbi = TRUE, gbif = TRUE, iucn = TRUE, cites = FALSE, cites_token = NA, clean_output = FALSE) {
+ribbitr_taxa_lookup = function(taxa, itis = TRUE, ncbi = TRUE, gbif = TRUE, iucn = TRUE, cites = FALSE, cites_token = NA, output = "full") {
   if (class(taxa) != "character") {
     stop("taxa must be a sting or character vector.")
   }
@@ -488,7 +489,7 @@ ribbitr_taxa_lookup = function(taxa, itis = TRUE, ncbi = TRUE, gbif = TRUE, iucn
     output = map_df(taxa, ~ ribbitr_taxa_lookup_single(.x, itis = itis, ncbi = ncbi, gbif = gbif, iucn = iucn, cites = cites, cites_token = cites_token))
   }
 
-  if (clean_output) {
+  if (output %in% c("simplified", "simple")) {
     output = output %>%
       mutate("amphibiaweb_species" = ifelse(is.na(aw_species), NA, paste(aw_genus, aw_species)),
              "amphibiaweb_class" = ifelse(is.na(aw_species), NA, "Amphibia"),
@@ -562,6 +563,45 @@ ribbitr_taxa_lookup = function(taxa, itis = TRUE, ncbi = TRUE, gbif = TRUE, iucn
                       "iucn_status_matched",
                       "iucn_tsn_current",
                       "iucn_canonical_current",
+                      "cites_id",
+                      "cites_appendix")))
+  }
+
+  if (output == "simple") {
+    output = output %>%
+      rename(any_of(c("itis_tsn" = "itis_tsn_current",
+                      "itis_taxon" = "itis_canonical_current",
+                      "itis_rank" = "itis_rank_current",
+                      "ncbi_id" = "ncbi_id_matched",
+                      "ncbi_taxon" = "ncbi_canonical_matched",
+                      "gbif_id" = "gbif_id_current",
+                      "gbif_taxon" = "gbif_canonical_current",
+                      "iucn_tsn" = "iucn_tsn_current",
+                      "iucn_taxon" = "iucn_canonical_current",
+                      "amphibiaweb_common_name" = "amphibiaweb_common"))) %>%
+      select(all_of(c("taxon_id",
+                      "taxon",
+                      "amphibiaweb_id",
+                      "amphibiaweb_class",
+                      "amphibiaweb_order",
+                      "amphibiaweb_family",
+                      "amphibiaweb_genus",
+                      "amphibiaweb_species",
+                      "amphibiaweb_common_name",
+                      "amphibiaweb_url",
+                      "itis_tsn",
+                      "itis_rank",
+                      "itis_class",
+                      "itis_order",
+                      "itis_family",
+                      "itis_genus",
+                      "itis_species",
+                      "ncbi_id",
+                      "ncbi_taxon",
+                      "gbif_id",
+                      "gbif_taxon",
+                      "iucn_tsn",
+                      "iucn_taxon",
                       "cites_id",
                       "cites_appendix")))
   }
