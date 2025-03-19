@@ -115,7 +115,7 @@ scrape_cites <- function(sci_nam, authentication_token, quietly = FALSE) {
     }
 
     # Initialize result tibble with default NA values
-    result <- tibble(
+    result <- dplyr::tibble(
       name_submitted = name_submitted,
       cites_id = NA,
       cites_appendix = NA
@@ -125,19 +125,23 @@ scrape_cites <- function(sci_nam, authentication_token, quietly = FALSE) {
     tryCatch({
       name_submitted = gsub("_", " ", name_submitted)
 
-      response <- GET(
+      response <- httr::GET(
         url = "https://api.speciesplus.net/api/v1/taxon_concepts",
         query = list(name = name_submitted),
-        add_headers("X-Authentication-Token" = token)
+        httr::add_headers("X-Authentication-Token" = token)
       )
 
       # Parse JSON content
-      content <- fromJSON(rawToChar(response$content))
+      content <- jsonlite::fromJSON(rawToChar(response$content))
 
       res = content[["taxon_concepts"]][["cites_listings"]][[1]]
 
-      result$cites_id <- res$id
-      result$cites_appendix <- res$appendix
+      if (!is.null(result$cites_id)){
+        result$cites_id <- res$id
+      }
+      if (!is.null(result$cites_appendix)){
+        result$cites_appendix <- res$appendix
+      }
 
     }, error = function(e) {
       if (!quietly) {
@@ -282,4 +286,285 @@ ribbitr_clean_taxa <- function(data, taxon_column, comment_column = NULL) {
                                                   !!taxon_col_sym)))
 
   return(data_out)
+}
+
+
+map_rank = function(rank) {
+  rmap = c("kingdom" = 1,
+           "subkingdom" = 2,
+           "infrakingdom" = 3,
+           "phylum" = 4,
+           "subphylum" = 5,
+           "infraphylum" = 6,
+           "superclass" = 7,
+           "class" = 8,
+           "order" = 9,
+           "family" = 10,
+           "subfamily" = 11,
+           "genus" = 12,
+           "species" = 13)
+
+  return(as.integer(rmap[rank]))
+}
+
+safely_gna_verifier = purrr::safely(taxize::gna_verifier)
+
+
+#' @importFrom dplyr %>% mutate filter select bind_cols rename_with any_of
+#' @importFrom tidyr pivot_wider
+#' @importFrom purrr map_int
+#' @importFrom taxize itis_taxrank itis_hierarchy
+ribbitr_taxa_lookup_single = function(taxa, itis = TRUE, ncbi = TRUE, gbif = TRUE, iucn = TRUE, cites = FALSE, cites_token = NA) {
+  # intentionally written non-vectorized, to build in time buffers between queries for each database as requested by various databases
+
+  if (cites & is.na(cites_token)) {
+    stop("cites_token must be provided to query cites via API.")
+  }
+
+  taxa_raw = taxa
+  taxa = tolower(gsub("_", " ", taxa_raw))
+
+  cat("\033[1;37m", taxa, ": ", sep = "")
+  cat("\033[38;5;240m", "AmphibiaWeb", sep = "")
+  taxa_aw = scrape_amphibiaweb(taxa, quietly = TRUE)
+
+  if (itis) {
+    cat(", ITIS", sep = "")
+    taxa_itis = safely_gna_verifier(taxa, data_sources = 3, capitalize = TRUE)
+
+
+    if (is.null(taxa_itis$error)){
+      if (taxa_itis$result$matchType == "PartialExact") {
+        taxa_itis$error$message = "PartialExact"
+        itis_pos = FALSE
+      } else if (!is.na(taxa_itis$result$currentRecordId)){
+        itis_pos = TRUE
+      } else {
+        itis_pos = FALSE
+      }
+    } else {
+      itis_pos = FALSE
+    }
+
+    if (itis_pos) {
+      cat(", ITIS hierarchy", sep = "")
+      rankname_itis = tolower(itis_taxrank(taxa_itis$result$currentRecordId))
+      ranknum_itis = map_rank(rankname_itis)
+
+      hierarchy_itis = itis_hierarchy(taxa_itis$result$currentRecordId, "full") %>%
+        mutate(ranknum = map_int(rankname, ~ map_rank(.x))) %>%
+        filter(ranknum >= 8,
+               ranknum <= ranknum_itis) %>%
+        select(rankname,
+               taxonname) %>%
+        pivot_wider(names_from = rankname,
+                    values_from = taxonname) %>%
+        mutate(rankname = rankname_itis)
+    } else {
+      hierarchy_itis <- data.frame(
+        class = NA_character_,
+        order = NA_character_,
+        family = NA_character_,
+        genus = NA_character_,
+        species = NA_character_,
+        rankname = NA_character_
+      )
+    }
+  }
+
+  if (ncbi) {
+    cat(", NCBI", sep = "")
+    taxa_ncbi = safely_gna_verifier(taxa, data_sources = 4, capitalize = TRUE)
+    if (is.null(taxa_ncbi$error)){
+      if (taxa_ncbi$result$matchType == "PartialExact") {
+        taxa_ncbi$error$message = "PartialExact"
+      }
+    }
+  }
+
+
+  if (gbif) {
+    cat(", GBIF", sep = "")
+    taxa_gbif = safely_gna_verifier(taxa, data_sources = 11, capitalize = TRUE)
+    if (is.null(taxa_gbif$error)){
+      if (taxa_gbif$result$matchType == "PartialExact") {
+        taxa_gbif$error$message = "PartialExact"
+      }
+    }
+  }
+
+  if (iucn) {
+    cat(", IUCN", sep = "")
+    taxa_iucn = safely_gna_verifier(taxa, data_sources = 163, capitalize = TRUE)
+    if (is.null(taxa_iucn$error)){
+      if (taxa_iucn$result$matchType == "PartialExact") {
+        taxa_iucn$error$message = "PartialExact"
+      }
+    }
+  }
+
+  if (cites) {
+    cat(", CITES", sep = "")
+    taxa_cites = scrape_cites(taxa, cites_token, quietly = TRUE)
+  }
+
+  cat("\n", sep = "")
+
+  taxa_out = taxa_aw %>%
+    rename_with(~ paste0("aw_", .)) %>%
+    mutate(taxa_search = taxa)
+
+  if (itis & is.null(taxa_itis$error)) {
+    taxa_out = taxa_out %>%
+      bind_cols(taxa_itis$result %>%
+                  rename_with(~ paste0("itis_", .)))
+
+
+    taxa_out = taxa_out %>%
+      bind_cols(hierarchy_itis %>%
+                  rename_with(~ paste0("itis_", .)))
+  }
+
+  if (ncbi & is.null(taxa_ncbi$error)) {
+    taxa_out = taxa_out %>%
+      bind_cols(taxa_ncbi$result %>%
+                  rename_with(~ paste0("ncbi_", .)))
+  }
+
+  if (gbif & is.null(taxa_gbif$error)) {
+    taxa_out = taxa_out %>%
+      bind_cols(taxa_gbif$result %>%
+                  rename_with(~ paste0("gbif_", .)))
+  }
+
+  if (iucn & is.null(taxa_iucn$error)) {
+    taxa_out = taxa_out %>%
+      bind_cols(taxa_iucn$result %>%
+                  rename_with(~ paste0("iucn_", .)))
+  }
+
+  if (cites) {
+    taxa_out = taxa_out %>%
+      bind_cols(taxa_cites)
+  }
+
+  taxa_out$taxa_raw = taxa_raw
+
+  return(taxa_out)
+}
+
+
+#' Systematically look up taxa names
+#'
+#' References a number of taxanomic databases to build or update a taxonomy lookup table. Primary reference in Amphibiaweb, others are optional.
+#' @param taxa data frame with taxa data
+#' @param itis do you want to query ITIS?
+#' @param ncbi do you want to query NCBI?
+#' @param gbif do you want to query GBIF?
+#' @param iucn do you want to query IUCN?
+#' @param cites do you want to query CITES?
+#' @param cites_token CITES API token, required to query CITES.
+#' @return table of results for submitted taxa
+#' @examples
+#' # example data
+#'
+#' my_taxa = c(
+#' "rana_muscosa",
+#' "atelopus_zeteki",
+#' "pristimantis")
+#'
+#' my_taxa_lookup = ribbitr_taxa_lookup(my_taxa)
+#' @importFrom dplyr %>% mutate rename select any_of
+#' @importFrom purrr map_df
+#' @export
+ribbitr_taxa_lookup = function(taxa, itis = TRUE, ncbi = TRUE, gbif = TRUE, iucn = TRUE, cites = FALSE, cites_token = NA, clean_output = FALSE) {
+  if (class(taxa) != "character") {
+    stop("taxa must be a sting or character vector.")
+  }
+
+  if (length(taxa) == 1) {
+    output = ribbitr_taxa_lookup_single(taxa, itis = itis, ncbi = ncbi, gbif = gbif, iucn = iucn, cites = cites, cites_token = cites_token)
+  } else {
+    output = map_df(taxa, ~ ribbitr_taxa_lookup_single(.x, itis = itis, ncbi = ncbi, gbif = gbif, iucn = iucn, cites = cites, cites_token = cites_token))
+  }
+
+  if (clean_output) {
+    output = output %>%
+      mutate("amphibiaweb_species" = ifelse(is.na(aw_species), NA, paste(aw_genus, aw_species)),
+             "amphibiaweb_class" = ifelse(is.na(aw_species), NA, "Amphibia"),
+             "aw_url" = gsub("_ws\\?", "_query?", aw_url)) %>%
+      rename(any_of(c("taxon_id" = "taxa_raw",
+                      "taxon" = "taxa_search",
+                      "amphibiaweb_id" = "aw_amphib_id",
+                      "amphibiaweb_order" = "aw_order",
+                      "amphibiaweb_family" = "aw_family",
+                      "amphibiaweb_subfamily" = "aw_subfamily",
+                      "amphibiaweb_genus" = "aw_genus",
+                      "amphibiaweb_common" = "aw_common_name",
+                      "amphibiaweb_url" = "aw_url",
+                      "itis_tsn_matched" = "itis_recordId",
+                      "itis_canonical_matched" = "itis_matchedCanonicalSimple",
+                      "itis_status_matched" = "itis_taxonomicStatus",
+                      "itis_match_type" = "itis_matchType",
+                      "itis_tsn_current" = "itis_currentRecordId",
+                      "itis_canonical_current" = "itis_currentCanonicalSimple",
+                      "itis_rank_current" = "itis_rankname",
+                      "ncbi_id_matched" = "ncbi_recordId",
+                      "ncbi_canonical_matched" = "ncbi_matchedCanonicalSimple",
+                      "ncbi_status_matched" = "ncbi_taxonomicStatus",
+                      "ncbi_id_current" = "ncbi_currentRecordId",
+                      "ncbi_canonical_current" = "ncbi_currentCanonicalSimple",
+                      "gbif_id_matched" = "gbif_recordId",
+                      "gbif_canonical_matched" = "gbif_matchedCanonicalSimple",
+                      "gbif_status_matched" = "gbif_taxonomicStatus",
+                      "gbif_id_current" = "gbif_currentRecordId",
+                      "gbif_canonical_current" = "gbif_currentCanonicalSimple",
+                      "iucn_tsn_matched" = "iucn_recordId",
+                      "iucn_canonical_matched" = "iucn_matchedCanonicalSimple",
+                      "iucn_status_matched" = "iucn_taxonomicStatus",
+                      "iucn_tsn_current" = "iucn_currentRecordId",
+                      "iucn_canonical_current" = "iucn_currentCanonicalSimple"))) %>%
+      select(any_of(c("taxon_id",
+                      "taxon",
+                      "amphibiaweb_id",
+                      "amphibiaweb_class",
+                      "amphibiaweb_order",
+                      "amphibiaweb_family",
+                      "amphibiaweb_subfamily",
+                      "amphibiaweb_genus",
+                      "amphibiaweb_species",
+                      "amphibiaweb_common",
+                      "amphibiaweb_url",
+                      "itis_tsn_matched",
+                      "itis_canonical_matched",
+                      "itis_status_matched",
+                      "itis_match_type",
+                      "itis_tsn_current",
+                      "itis_canonical_current",
+                      "itis_rank_current",
+                      "itis_class",
+                      "itis_order",
+                      "itis_family",
+                      "itis_genus",
+                      "itis_species",
+                      "ncbi_id_matched",
+                      "ncbi_canonical_matched",
+                      "ncbi_status_matched",
+                      "ncbi_id_current",
+                      "ncbi_canonical_current",
+                      "gbif_id_matched",
+                      "gbif_canonical_matched",
+                      "gbif_status_matched",
+                      "gbif_id_current",
+                      "gbif_canonical_current",
+                      "iucn_tsn_matched",
+                      "iucn_canonical_matched",
+                      "iucn_status_matched",
+                      "iucn_tsn_current",
+                      "iucn_canonical_current",
+                      "cites_id",
+                      "cites_appendix")))
+  }
+
+  return(output)
 }
