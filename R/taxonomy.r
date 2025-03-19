@@ -567,7 +567,7 @@ ribbitr_taxa_lookup = function(taxa, itis = TRUE, ncbi = TRUE, gbif = TRUE, iucn
                       "cites_appendix")))
   }
 
-  if (output == "simple") {
+  if (format == "simple") {
     output = output %>%
       rename(any_of(c("itis_tsn" = "itis_tsn_current",
                       "itis_taxon" = "itis_canonical_current",
