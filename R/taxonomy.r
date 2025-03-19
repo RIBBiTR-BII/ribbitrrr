@@ -457,7 +457,7 @@ ribbitr_taxa_lookup_single = function(taxa, itis = TRUE, ncbi = TRUE, gbif = TRU
 #' Systematically look up taxa names
 #'
 #' References a number of taxanomic databases to build or update a taxonomy lookup table. Primary reference in Amphibiaweb, others are optional.
-#' @param taxa data frame with taxa data
+#' @param taxa character vector (or sting) of taxa names to be looked up
 #' @param itis do you want to query ITIS?
 #' @param ncbi do you want to query NCBI?
 #' @param gbif do you want to query GBIF?
