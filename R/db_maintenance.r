@@ -260,3 +260,65 @@ stage_to_temp <- function(dbcon, reference_table, novel_data) {
 
   return(temp_table_name)
 }
+
+#' Identify and resolve sample name conflicts
+#'
+#' Identifies sample_name/sample_type conflicts 1) within new data, 2) between new and old data, and 3) between new and old, previously conflicting and resolved data.
+#' @param data Cleaned new sample data to be compared for conflicts
+#' @param db_sample A lazy table object pointing to the sample database table ("old data")
+#' @param novel_data Data Frame of rows to be pushed to the database
+#' @return Returns a table of new data plus any old data to be updated. This table should be upserted into database.
+#' @importFrom dplyr %>% mutate collect bind_rows select distinct inner_join group_by ungroup filter
+#' @importFrom janitor get_dupes
+#' @export
+resolve_sample_conflicts = function(data, db_sample) {
+  # identify 3 types of conflicts
+  # 1) sample name conflicts in new data
+  # 2) sample name conflicts between new and existing data
+  # 3) sample name conflicts between new and existing (and already revised) data
+
+  data_new = data %>%
+    mutate(dupe = FALSE,
+           data = "new",
+           drop = FALSE)
+
+  data_sample = db_sample %>%
+    collect() %>%
+    mutate(data = "old")
+
+  data_old_first = bind_rows(data_sample,
+                             data_r)
+  conflict_old_first = get_dupes(data_old_first, sample_name, sample_type) %>%
+    select(sample_name, sample_type) %>%
+    distinct()
+
+  old_first = data_sample %>%
+    inner_join(conflict_old_first, by = c("sample_name", "sample_type")) %>%
+    mutate(drop = FALSE)
+
+  old_revised = data_sample %>%
+    filter(sample_name_conflict %in% data_r$sample_name) %>%
+    mutate(drop = TRUE,
+           sample_name = sample_name_conflict)
+
+  data_r = bind_rows(old_first,
+                     old_revised,
+                     data_new)
+
+  data_s = data_r %>%
+    group_by(sample_name, sample_type) %>%
+    mutate(row_num = row_number(),
+           dupe = ifelse(n() > 1, TRUE, FALSE),
+           sample_name_conflict = ifelse(dupe,
+                                         sample_name,
+                                         NA_character_)) %>%
+    ungroup() %>%
+    mutate(sample_name = ifelse(dupe,
+                                paste0(sample_name, "_", letters[row_num]),
+                                sample_name),
+           uuid_name = paste0(sample_name, sample_type),
+           sample_id = ifelse(dupe & data == "new", UUIDfromName("1208e62f-d3a1-462c-984f-0bf1f43f5837", uuid_name), sample_id)) %>%
+    filter(!drop) %>%
+    select(-row_num,
+           -drop)
+}
