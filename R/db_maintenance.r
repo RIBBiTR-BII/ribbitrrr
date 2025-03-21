@@ -293,7 +293,7 @@ resolve_sample_conflicts = function(data, db_sample) {
                  distinct())
 
   data_old_first = bind_rows(data_sample,
-                             data_r)
+                             data_new)
   conflict_old_first = get_dupes(data_old_first, sample_name, sample_type) %>%
     select(sample_name, sample_type) %>%
     distinct()
@@ -305,7 +305,7 @@ resolve_sample_conflicts = function(data, db_sample) {
   old_first_n = nrow(old_first)
 
   old_revised = data_sample %>%
-    filter(sample_name_conflict %in% data_r$sample_name) %>%
+    filter(sample_name_conflict %in% data_new$sample_name) %>%
     mutate(drop = TRUE,
            sample_name = sample_name_conflict)
 
@@ -341,4 +341,5 @@ resolve_sample_conflicts = function(data, db_sample) {
     cat("Sample name/type conflicts found:\n\tnew conflicts: ", new_n, "\n\tnew/old conflicts:", old_first_n, "\n\tnew/old(previously-revised) conflicts", old_revised_n, sep = "")
   }
 
+ return(data_s)
 }
