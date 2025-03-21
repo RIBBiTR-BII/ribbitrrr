@@ -286,6 +286,12 @@ resolve_sample_conflicts = function(data, db_sample) {
     collect() %>%
     mutate(data = "old")
 
+  new_n = nrow(data_new %>%
+                 get_dupes(sample_name, sample_type) %>%
+                 select(sample_name,
+                        sample_type) %>%
+                 distinct())
+
   data_old_first = bind_rows(data_sample,
                              data_r)
   conflict_old_first = get_dupes(data_old_first, sample_name, sample_type) %>%
@@ -296,10 +302,17 @@ resolve_sample_conflicts = function(data, db_sample) {
     inner_join(conflict_old_first, by = c("sample_name", "sample_type")) %>%
     mutate(drop = FALSE)
 
+  old_first_n = nrow(old_first)
+
   old_revised = data_sample %>%
     filter(sample_name_conflict %in% data_r$sample_name) %>%
     mutate(drop = TRUE,
            sample_name = sample_name_conflict)
+
+  old_revised_n = nrow(old_revised %>%
+                         select(sample_name,
+                                sample_type) %>%
+                         distinct())
 
   data_r = bind_rows(old_first,
                      old_revised,
@@ -321,4 +334,11 @@ resolve_sample_conflicts = function(data, db_sample) {
     filter(!drop) %>%
     select(-row_num,
            -drop)
+
+  if (new_n == 0 & old_first_n == 0 & old_revised_n == 0) {
+    cat("No sample name/type conflicts found.")
+  } else {
+    cat("Sample name/type conflicts found:\n\tnew conflicts: ", new_n, "\n\tnew/old conflicts:", old_first_n, "\n\tnew/old(previously-revised) conflicts", old_revised_n, sep = "")
+  }
+
 }
