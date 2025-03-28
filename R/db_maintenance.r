@@ -338,7 +338,7 @@ resolve_sample_conflicts = function(data, db_sample) {
   if (new_n == 0 & old_first_n == 0 & old_revised_n == 0) {
     cat("No sample name/type conflicts found.")
   } else {
-    cat("Sample name/type conflicts found:\n\tnew conflicts: ", new_n, "\n\tnew/old conflicts:", old_first_n, "\n\tnew/old(previously-revised) conflicts", old_revised_n, sep = "")
+    cat("Sample name/type conflicts found:\n\tnew conflicts: ", new_n, "\n\tnew/old conflicts: ", old_first_n, "\n\tnew/old(previously-revised) conflicts: ", old_revised_n, sep = "")
   }
 
  return(data_s)
