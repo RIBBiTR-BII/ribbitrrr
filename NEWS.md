@@ -1,4 +1,9 @@
 # ribbitrrr
+## [0.0.2.1] - 2025-04-07
+### Added
+
+- get_ribbitr_metadata() function for subsetting column metadata from the metadata_columns table to match columns of a dbplyr query
+
 ## [0.0.2.0] - 2025-02-14
 ### Added
 
