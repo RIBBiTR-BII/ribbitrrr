@@ -343,3 +343,53 @@ resolve_sample_conflicts = function(data, db_sample) {
 
  return(data_s)
 }
+
+#' Check for valid values in catagorical variables
+#'
+#' Compares caagorical varibles with the defined catagories in column metadata, to make sure they are validprior to pushing.
+#' @param data Data table with column names matching a given table in the column metadata
+#' @param table corresponding table name in column metadata (str)
+#' @param novel_data column metadata pulled from database
+#' @return Silently returns same data table with no revisions. Throws warning with report on invalid data if found.
+#' @importFrom dplyr %>% pull
+#' @export
+catagorical_check = function(data, table, mdc){
+  mdc_data = mdc %>%
+    filter(table_name == table)
+
+  cat_cols = mdc_data$column_name[grepl("^\\{.*\\}$", mdc_data$format)]
+
+  cat_cols_present = intersect(cat_cols, colnames(data))
+
+  invalid = FALSE
+
+  w_message = ""
+
+  for (cc in cat_cols_present) {
+    mdc_row = mdc_data[mdc_data$column_name == cc,]
+
+    data_na = any(is.na(data[cc]))
+    mdc_na = mdc_row$is_nullable
+
+    data_vals = unique(data[cc]) %>%
+      pull(cc)
+    mdc_vals = strsplit(gsub("\\{|\\}", "", mdc_row$format), ",\\s*")[[1]]
+
+    if (mdc_na) {
+      mdc_vals = c(mdc_vals, NA)
+    }
+
+    invalid_vals = setdiff(data_vals, mdc_vals)
+
+    if (length(undefined_vals) > 0) {
+      undefined = TRUE
+      w_message = paste0(w_message, "\n\tColumn: ", cc, "\n\t\tDefined values: ", paste(mdc_vals, collapse = ", "), "\n\t\tUndefined values: ", paste(undefined_vals, collapse = ", "), "\n")
+      }
+  }
+
+  if (undefined) {
+    warning(paste0("Invalid values found in catagotical data:\n", w_message))
+  }
+
+  return(data)
+}
