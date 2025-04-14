@@ -231,6 +231,7 @@ ribbitr_clean_taxa <- function(data, taxon_column, comment_column = NULL) {
     'hyllodes_phyllodes' = 'hylodes_phyllodes',
     'ischnocnema_cf._lactea' = 'ischnocnema',
     'ischnocnema__henselii' = 'ischnocnema_henselii',
+    'ischnocnema_henselli' = 'ischnocnema_henselii',
     'ischnocnema_sp' = 'ischnocnema',
     'ischnocnema_sp._02_(aff._lactea)' = 'ischnocnema',
     'larval_salamander_sp.' = 'caudata',
