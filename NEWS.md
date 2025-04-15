@@ -1,4 +1,11 @@
 # ribbitrrr
+
+## [0.0.2.2] - 2025-04-15
+### Added
+
+- support for passing yaml file with login credentials to hopToDB()
+
+
 ## [0.0.2.1] - 2025-04-07
 ### Added
 

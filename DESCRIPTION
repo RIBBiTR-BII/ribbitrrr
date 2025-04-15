@@ -20,7 +20,8 @@ Imports:
     xml2,
     purrr,
     lubridate,
-    rscontract
+    rscontract,
+    yaml
 Suggests: 
     testthat (>= 3.0.0),
     taxize,
