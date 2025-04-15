@@ -130,6 +130,7 @@ hopRegister = function(dbcon, dbhost, dbname, connection_id, type) {
 #' A simple function to easily to the RIBBiTR (or another) remote database. The following database connection credentials must be saved to your local .Renviron file(see \link[DBI]{dbConnect}): dbname - the database name, host - the database host, port - the database port, user - your database username, password - your database password. Variables may be defined with an optional prefix seperated by and underscore (e.g. "ribbitr_dbname") to distinguish multiple connections.
 #' @param prefix an optional prefix (string) added to the front of connection credential variables to distinguish between sets of credentials.
 #' @param timezone an optional timezone parameter to help convert data from various timezones to your local time.
+#' @param yaml path to YAML file containing login credentials. Default of NA assumes credentials are stored in .Renviron file
 #' @param hopReg Do you want to be able to view and browse this connection in the RStudio Connections Pane?
 #' @return database connection object, to be passed to other functions (e.g. \link[DBI]{dbListTables}, \link[dplyr]{tbl}, etc.).
 #' @examples
@@ -163,8 +164,9 @@ hopRegister = function(dbcon, dbhost, dbname, connection_id, type) {
 #' @importFrom DBI dbConnect dbDriver dbListTables
 #' @importFrom RPostgres Postgres
 #' @importFrom stats na.omit
+#' @importFrom yaml yaml.load
 #' @export
-hopToDB = function(prefix = NA, timezone = NULL, hopReg = TRUE) {
+hopToDB = function(prefix = NA, timezone = NULL, yaml = NA, hopReg = TRUE) {
   drv = dbDriver("Postgres")
   dbname_var = paste(na.omit(c(prefix, "dbname")), collapse = ".")
   host_var = paste(na.omit(c(prefix, "host")), collapse = ".")
@@ -172,43 +174,91 @@ hopToDB = function(prefix = NA, timezone = NULL, hopReg = TRUE) {
   user_var = paste(na.omit(c(prefix, "user")), collapse = ".")
   password_var = paste(na.omit(c(prefix, "password")), collapse = ".")
 
-  # attempt to fetch dbname
-  dbname = Sys.getenv(dbname_var)
-  if (dbname == "") {
-    stop(paste0("Specified dbname not found in .Renviron: '", dbname_var, "'. Have these database parameters been set up?"), call. = FALSE)
-  }
+  if (is.na(yaml)) {
+    # default to .Renviron, if no yaml provided
 
-  # attempt to fetch host
-  host = Sys.getenv(host_var)
-  if (host == "") {
-    stop(paste0("Specified host not found in .Renviron: '", host_var, "'"), call. = FALSE)
-  }
-
-  # attempt to fetch host
-  port = Sys.getenv(port_var)
-  if (port == "") {
-    stop(paste0("Specified port not found in .Renviron: '", port_var, "'"), call. = FALSE)
-  }
-
-  # attempt to fetch user
-  tryCatch({
-    user = Sys.getenv(user_var)
-  },
-  error=function(e) {
-    if (!grepl("object 'user' not found", e$message)) {
-      message(e$message)
+    # attempt to fetch dbname
+    dbname = Sys.getenv(dbname_var)
+    if (dbname == "") {
+      stop(paste0("Specified dbname not found in .Renviron: '", dbname_var, "'. Have these database parameters been set up?"), call. = FALSE)
     }
-  })
 
-  # attempt to fetch password
-  tryCatch({
-    password = Sys.getenv(password_var)
-  },
-  error=function(e) {
-    if (!grepl("object 'password' not found", e$message)) {
-      message(e$message)
+    # attempt to fetch host
+    host = Sys.getenv(host_var)
+    if (host == "") {
+      stop(paste0("Specified host not found in .Renviron: '", host_var, "'"), call. = FALSE)
     }
-  })
+
+    # attempt to fetch host
+    port = Sys.getenv(port_var)
+    if (port == "") {
+      stop(paste0("Specified port not found in .Renviron: '", port_var, "'"), call. = FALSE)
+    }
+
+    # attempt to fetch user
+    tryCatch({
+      user = Sys.getenv(user_var)
+    },
+    error=function(e) {
+      if (!grepl("object 'user' not found", e$message)) {
+        message(e$message)
+      }
+    })
+
+    # attempt to fetch password
+    tryCatch({
+      password = Sys.getenv(password_var)
+    },
+    error=function(e) {
+      if (!grepl("object 'password' not found", e$message)) {
+        message(e$message)
+      }
+    })
+  } else {
+    # load from yaml
+    creds = yaml.load_file(yaml)
+
+    # attempt to fetch dbname
+    dbname = creds[[dbname_var]]
+    if (is.null(dbname)) {
+      stop(paste0("Specified dbname ('", dbname_var, "') not found in YAML. Have these database parameters been set up?"), call. = FALSE)
+    }
+
+    # attempt to fetch host
+    host = creds[[host_var]]
+    if (is.null(host)) {
+      stop(paste0("Specified host ('", host_var, "') not found in YAML."), call. = FALSE)
+    }
+
+    # attempt to fetch host
+    port = creds[[port_var]]
+    if (is.null(port)) {
+      stop(paste0("Specified port ('", port_var, "') not found in YAML."), call. = FALSE)
+    }
+
+    # attempt to fetch user
+    tryCatch({
+      user = creds[[user_var]]
+    },
+    error=function(e) {
+      if (!grepl("object 'user' not found", e$message)) {
+        message(e$message)
+      }
+    })
+
+    # attempt to fetch password
+    tryCatch({
+      password = creds[[password_var]]
+    },
+    error=function(e) {
+      if (!grepl("object 'password' not found", e$message)) {
+        message(e$message)
+      }
+    })
+
+  }
+
+
 
   # use prefix for database_name if provided, otherwise dbname
   if (!is.na(prefix)) {

@@ -4,12 +4,14 @@
 \alias{hopToDB}
 \title{hopToDB}
 \usage{
-hopToDB(prefix = NA, timezone = NULL, hopReg = TRUE)
+hopToDB(prefix = NA, timezone = NULL, yaml = NA, hopReg = TRUE)
 }
 \arguments{
 \item{prefix}{an optional prefix (string) added to the front of connection credential variables to distinguish between sets of credentials.}
 
 \item{timezone}{an optional timezone parameter to help convert data from various timezones to your local time.}
+
+\item{yaml}{path to YAML file containing login credentials. Default of NA assumes credentials are stored in .Renviron file}
 
 \item{hopReg}{Do you want to be able to view and browse this connection in the RStudio Connections Pane?}
 }
