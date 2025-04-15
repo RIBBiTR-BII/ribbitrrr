@@ -141,6 +141,7 @@ compare_for_staging = function(data_old, data_new, key_columns, return_all=TRUE,
 #'
 #' Using output results from \link[ribbitrrr]{compare_for_staging}, identifies which columns differ for a given set of rows and outputs a comparison table for each column.
 #' @param data_old Results from \link[ribbitrrr]{compare_for_staging} which contain updates (either update = TRUE or return_all = TRUE)
+#' @param id_cols name(s) of ID column(s) to be reported alongside difference data
 #' @return A list of dataframes corresponding to columns which differe between update and update_old data.
 #' @examples
 #'

@@ -7,6 +7,8 @@
 compare_updates(cfs_results, id_cols = NA)
 }
 \arguments{
+\item{id_cols}{name(s) of ID column(s) to be reported alongside difference data}
+
 \item{data_old}{Results from \link[ribbitrrr]{compare_for_staging} which contain updates (either update = TRUE or return_all = TRUE)}
 }
 \value{
