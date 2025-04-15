@@ -140,7 +140,7 @@ compare_for_staging = function(data_old, data_new, key_columns, return_all=TRUE,
 #' Distinguishing columns to update
 #'
 #' Using output results from \link[ribbitrrr]{compare_for_staging}, identifies which columns differ for a given set of rows and outputs a comparison table for each column.
-#' @param data_old Results from \link[ribbitrrr]{compare_for_staging} which contain updates (either update = TRUE or return_all = TRUE)
+#' @param cfs_results Results from \link[ribbitrrr]{compare_for_staging} which contain updates (either update = TRUE or return_all = TRUE)
 #' @param id_cols name(s) of ID column(s) to be reported alongside difference data
 #' @return A list of dataframes corresponding to columns which differe between update and update_old data.
 #' @examples
@@ -183,7 +183,8 @@ compare_updates = function(cfs_results, id_cols = NA) {
 
         if (!is.na(id_cols)) {
           diff_df = bind_cols(df1 %>%
-                                select(any_of(id_cols)),
+                                select(any_of(id_cols)) %>%
+                                filter(diff_mask),
                               diff_df)
         }
 
