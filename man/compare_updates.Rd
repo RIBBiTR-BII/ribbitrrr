@@ -4,7 +4,7 @@
 \alias{compare_updates}
 \title{Distinguishing columns to update}
 \usage{
-compare_updates(cfs_results, id_cols = NA)
+compare_updates(cfs_results, id_cols = NULL)
 }
 \arguments{
 \item{cfs_results}{Results from \link[ribbitrrr]{compare_for_staging} which contain updates (either update = TRUE or return_all = TRUE)}

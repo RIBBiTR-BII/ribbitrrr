@@ -153,7 +153,7 @@ compare_for_staging = function(data_old, data_new, key_columns, return_all=TRUE,
 #' @importFrom dplyr %>% rename
 #' @export
 #'
-compare_updates = function(cfs_results, id_cols = NA) {
+compare_updates = function(cfs_results, id_cols = NULL) {
 
   df1 = cfs_results$update
   df2 = cfs_results$update_old
@@ -181,7 +181,7 @@ compare_updates = function(cfs_results, id_cols = NA) {
           row = which(diff_mask)
         )
 
-        if (!is.na(id_cols)) {
+        if (!is.null(id_cols)) {
           diff_df = bind_cols(df1 %>%
                                 select(any_of(id_cols)) %>%
                                 filter(diff_mask),
