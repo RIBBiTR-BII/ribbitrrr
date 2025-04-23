@@ -164,7 +164,7 @@ hopRegister = function(dbcon, dbhost, dbname, connection_id, type) {
 #' @importFrom DBI dbConnect dbDriver dbListTables
 #' @importFrom RPostgres Postgres
 #' @importFrom stats na.omit
-#' @importFrom yaml yaml.load
+#' @importFrom yaml yaml.load_file
 #' @export
 hopToDB = function(prefix = NA, timezone = NULL, yaml = NA, hopReg = TRUE) {
   drv = dbDriver("Postgres")
