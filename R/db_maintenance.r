@@ -367,7 +367,7 @@ catagorical_check = function(data, table, mdc){
   mdc_data = mdc %>%
     filter(table_name == table)
 
-  cat_cols = mdc_data$column_name[grepl("^\\{.*\\}$", mdc_data$format)]
+  cat_cols = mdc_data$column_name[grepl("^\\[.*\\]$", mdc_data$format)]
 
   cat_cols_present = intersect(cat_cols, colnames(data))
 
@@ -383,7 +383,7 @@ catagorical_check = function(data, table, mdc){
 
     data_vals = unique(data[cc]) %>%
       pull(cc)
-    mdc_vals = strsplit(gsub("\\{|\\}", "", mdc_row$format), ",\\s*")[[1]]
+    mdc_vals = strsplit(gsub("\\[|\\]", "", mdc_row$format), ",\\s*")[[1]]
 
     if (mdc_na) {
       mdc_vals = c(mdc_vals, NA)
