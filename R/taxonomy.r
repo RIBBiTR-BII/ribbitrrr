@@ -1,3 +1,10 @@
+#' @keywords internal
+require_taxize <- function() {
+  if (!requireNamespace("taxize", quietly = TRUE)) {
+    stop("Please install taxize to use this feature: `install.packages(taxize)`")
+  }
+}
+
 #' Scrape taxa metadata from AmphibiaWeb
 #'
 #' Searches scientific names for corresponding species in AmphibiaWeb
@@ -15,10 +22,6 @@
 #' @export
 
 scrape_amphibiaweb <- function(sci_nam, quietly = FALSE) {
-  if (!requireNamespace("taxize", quietly = TRUE)) {
-    stop("The 'taxize' package is required but not installed. Please install it to use this function.")
-  }
-
   base_url <- "https://amphibiaweb.org/cgi/amphib_ws?where-genus={genus}&where-species={species}&src=eol"
 
   process_name <- function(name_submitted) {
@@ -315,9 +318,10 @@ safely_gna_verifier = purrr::safely(taxize::gna_verifier)
 #' @importFrom dplyr %>% mutate filter select bind_cols rename_with any_of
 #' @importFrom tidyr pivot_wider
 #' @importFrom purrr map_int
-#' @importFrom taxize itis_taxrank itis_hierarchy
 ribbitr_taxa_lookup_single = function(taxa, itis = TRUE, ncbi = TRUE, gbif = TRUE, iucn = TRUE, cites = FALSE, cites_token = NA) {
   # intentionally written non-vectorized, to build in time buffers between queries for each database as requested by various databases
+
+  require_taxize()
 
   if (cites & is.na(cites_token)) {
     stop("cites_token must be provided to query cites via API.")
@@ -350,10 +354,10 @@ ribbitr_taxa_lookup_single = function(taxa, itis = TRUE, ncbi = TRUE, gbif = TRU
 
     if (itis_pos) {
       cat(", ITIS hierarchy", sep = "")
-      rankname_itis = tolower(itis_taxrank(taxa_itis$result$currentRecordId))
+      rankname_itis = tolower(taxize::itis_taxrank(taxa_itis$result$currentRecordId))
       ranknum_itis = map_rank(rankname_itis)
 
-      hierarchy_itis = itis_hierarchy(taxa_itis$result$currentRecordId, "full") %>%
+      hierarchy_itis = taxize::itis_hierarchy(taxa_itis$result$currentRecordId, "full") %>%
         mutate(ranknum = map_int(rankname, ~ map_rank(.x))) %>%
         filter(ranknum >= 8,
                ranknum <= ranknum_itis) %>%

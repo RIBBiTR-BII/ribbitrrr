@@ -1,5 +1,10 @@
 # ribbitrrr
 
+## [0.0.2.3] - 2025-04-15
+### Added
+
+- taxize and janitor as optional dependencies
+
 ## [0.0.2.2] - 2025-04-15
 ### Added
 

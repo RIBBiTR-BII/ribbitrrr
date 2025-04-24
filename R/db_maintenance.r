@@ -279,7 +279,6 @@ stage_to_temp <- function(dbcon, reference_table, novel_data) {
 #' @param novel_data Data Frame of rows to be pushed to the database
 #' @return Returns a table of new data plus any old data to be updated. This table should be upserted into database.
 #' @importFrom dplyr %>% mutate collect bind_rows select distinct inner_join group_by ungroup filter
-#' @importFrom janitor get_dupes
 #' @export
 resolve_sample_conflicts = function(data, db_sample) {
   # identify 3 types of conflicts
@@ -297,14 +296,14 @@ resolve_sample_conflicts = function(data, db_sample) {
     mutate(data = "old")
 
   new_n = nrow(data_new %>%
-                 get_dupes(sample_name, sample_type) %>%
+                 janitor::get_dupes(sample_name, sample_type) %>%
                  select(sample_name,
                         sample_type) %>%
                  distinct())
 
   data_old_first = bind_rows(data_sample,
                              data_new)
-  conflict_old_first = get_dupes(data_old_first, sample_name, sample_type) %>%
+  conflict_old_first = janitor::get_dupes(data_old_first, sample_name, sample_type) %>%
     select(sample_name, sample_type) %>%
     distinct()
 
