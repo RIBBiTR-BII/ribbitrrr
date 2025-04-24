@@ -312,8 +312,6 @@ map_rank = function(rank) {
   return(as.integer(rmap[rank]))
 }
 
-safely_gna_verifier = purrr::safely(taxize::gna_verifier)
-
 
 #' @importFrom dplyr %>% mutate filter select bind_cols rename_with any_of
 #' @importFrom tidyr pivot_wider
@@ -322,6 +320,8 @@ ribbitr_taxa_lookup_single = function(taxa, itis = TRUE, ncbi = TRUE, gbif = TRU
   # intentionally written non-vectorized, to build in time buffers between queries for each database as requested by various databases
 
   require_taxize()
+
+  safely_gna_verifier = purrr::safely(taxize::gna_verifier)
 
   if (cites & is.na(cites_token)) {
     stop("cites_token must be provided to query cites via API.")
