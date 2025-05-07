@@ -30,7 +30,7 @@ microclimate_presurvey = function(survey_data, dbcon, buffer, time_series_pointe
     # check for timestamp
     if ("start_timestamp_utc" %in% data_cols) {
       # check format
-      if (!(class(survey_data$start_timestamp_utc) == c("POSIXct", "POSIXt"))) {
+      if (!all(class(survey_data$start_timestamp_utc) == c("POSIXct", "POSIXt"))) {
         stop("Unexpected format of 'start_timestamp' column. Expected c('POSIXct', 'POSIXt')")
       }
     } else {
