@@ -9,6 +9,7 @@
 #' @param output_timezone What timezone do you want resulting data to be output in (default: NA <=> UTC)? Format as string, options found in \link[base]{OlsonNames}
 #' @return coinciding time series data (where available) with an associated survey_id
 #' @importFrom dplyr tbl %>% select distinct filter pull mutate left_join collect
+#' @importFrom DBI Id
 #' @importFrom purrr pmap pmap_df
 #' @export
 microclimate_presurvey = function(survey_data, dbcon, buffer, time_series_pointer, time_sensitive = FALSE, output_timezone = NA) {
