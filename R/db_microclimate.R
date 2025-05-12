@@ -94,7 +94,7 @@ microclimate_presurvey = function(survey_data, dbcon, buffer, time_series_pointe
   }
 
   if (time_sensitive) {
-    survey_start_end = data_ex %>%
+    survey_start_end = survey_data %>%
       filter(site_id %in% sites_present) %>%
       mutate(start = start_timestamp_utc - buffer,
              end = start_timestamp_utc) %>%
@@ -102,7 +102,7 @@ microclimate_presurvey = function(survey_data, dbcon, buffer, time_series_pointe
 
     time_var = "start_timestamp"
   } else {
-    survey_start_end = data_ex %>%
+    survey_start_end = survey_data %>%
       filter(site_id %in% sites_present) %>%
       mutate(start = date - buffer,
              end = date) %>%
