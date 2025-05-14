@@ -89,8 +89,8 @@ microclimate_presurvey = function(survey_data, dbcon, buffer, time_series_pointe
   sites_present = intersect(sites_data, sites_mc)
   sites_absent = setdiff(sites_data, sites_mc)
 
-  if (length(sites_absent != 0)) {
-    warning(paste0("The following site_id's found in provided data have no associated microclimate loggers and will be ignored: ", paste(sites_absent, collapse = ", ")))
+  if (length(sites_absent) != 0) {
+    warning(paste0("The following ", length(sites_absent), " site_id's found in provided data have no associated microclimate loggers and will be ignored: ", paste(sites_absent, collapse = "\n")))
   }
 
   if (time_sensitive) {
