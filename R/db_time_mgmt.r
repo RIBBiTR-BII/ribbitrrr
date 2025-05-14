@@ -157,15 +157,26 @@ end_timestamp_utc = function(date, start_time, end_time, tz) {
 #'
 #' calculates timestamp of capture from date, time_of_capture, and time_zone. If the timestamp of capture is before the start timestamp, it adds 24 hours to the timestamp of capture.
 #' @param df dataframe with "date", "time_of_capture", and "time_zone" columns
+#' @param tz timezone from OlsonNames(). If NA, uses the `time_zone` column in the dataframe.
 #' @importFrom lubridate ymd_hms as_datetime hours
 #' @export
-timestamp_of_capture_utc = function(df) {
-  df %>%
-    mutate(timestamp_of_capture_utc = start_timestamp_utc(date, time_of_capture, time_zone),
-           timestamp_of_capture_utc = as_datetime(ifelse(timestamp_of_capture_utc < start_timestamp_utc,
-                                                         timestamp_of_capture_utc + hours(24),
-                                                         timestamp_of_capture_utc)))
+timestamp_of_capture_utc = function(df, tz = NA) {
+
+  if (is.na(tz)) {
+    df %>%
+      mutate(timestamp_of_capture_utc = start_timestamp_utc(date, time_of_capture, time_zone),
+             timestamp_of_capture_utc = as_datetime(ifelse(timestamp_of_capture_utc < start_timestamp_utc,
+                                                           timestamp_of_capture_utc + hours(24),
+                                                           timestamp_of_capture_utc)))
+  } else {
+    df %>%
+      mutate(timestamp_of_capture_utc = start_timestamp_utc(date, time_of_capture, tz),
+             timestamp_of_capture_utc = as_datetime(ifelse(timestamp_of_capture_utc < start_timestamp_utc,
+                                                           timestamp_of_capture_utc + hours(24),
+                                                           timestamp_of_capture_utc)))
+  }
 }
+
 
 #' time duration from timestamp
 #'

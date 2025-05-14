@@ -4,10 +4,12 @@
 \alias{timestamp_of_capture_utc}
 \title{timestamp_of_capture_utc}
 \usage{
-timestamp_of_capture_utc(df)
+timestamp_of_capture_utc(df, tz = NA)
 }
 \arguments{
 \item{df}{dataframe with "date", "time_of_capture", and "time_zone" columns}
+
+\item{tz}{timezone from OlsonNames(). If NA, uses the \code{time_zone} column in the dataframe.}
 }
 \description{
 calculates timestamp of capture from date, time_of_capture, and time_zone. If the timestamp of capture is before the start timestamp, it adds 24 hours to the timestamp of capture.
