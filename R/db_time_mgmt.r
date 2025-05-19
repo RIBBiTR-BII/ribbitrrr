@@ -179,7 +179,7 @@ timestamp_of_capture_utc = function(df, tz = NA) {
     return(df_out)
 
   } else {
-    warning("time_of_capture column not found in dataframe, skipping 'timestamp_of_capture_utm' calculation.")
+    warning("time_of_capture column not found in dataframe, skipping 'timestamp_of_capture_utc' calculation.")
     return(df)
   }
 
