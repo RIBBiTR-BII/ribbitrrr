@@ -162,19 +162,27 @@ end_timestamp_utc = function(date, start_time, end_time, tz) {
 #' @export
 timestamp_of_capture_utc = function(df, tz = NA) {
 
-  if (is.na(tz)) {
-    df %>%
-      mutate(timestamp_of_capture_utc = start_timestamp_utc(date, time_of_capture, time_zone),
-             timestamp_of_capture_utc = as_datetime(ifelse(timestamp_of_capture_utc < start_timestamp_utc,
-                                                           timestamp_of_capture_utc + hours(24),
-                                                           timestamp_of_capture_utc)))
+  if ("time_of_capture" %in% colnames(df)) {
+    if (is.na(tz)) {
+      df_out = df %>%
+        mutate(timestamp_of_capture_utc = start_timestamp_utc(date, time_of_capture, time_zone),
+               timestamp_of_capture_utc = as_datetime(ifelse(timestamp_of_capture_utc < start_timestamp_utc,
+                                                             timestamp_of_capture_utc + hours(24),
+                                                             timestamp_of_capture_utc)))
+    } else {
+      df_out = df %>%
+        mutate(timestamp_of_capture_utc = start_timestamp_utc(date, time_of_capture, tz),
+               timestamp_of_capture_utc = as_datetime(ifelse(timestamp_of_capture_utc < start_timestamp_utc,
+                                                             timestamp_of_capture_utc + hours(24),
+                                                             timestamp_of_capture_utc)))
+    }
+    return(df_out)
+
   } else {
-    df %>%
-      mutate(timestamp_of_capture_utc = start_timestamp_utc(date, time_of_capture, tz),
-             timestamp_of_capture_utc = as_datetime(ifelse(timestamp_of_capture_utc < start_timestamp_utc,
-                                                           timestamp_of_capture_utc + hours(24),
-                                                           timestamp_of_capture_utc)))
+    warning("time_of_capture column not found in dataframe, skipping 'timestamp_of_capture_utm' calculation.")
+    return(df)
   }
+
 }
 
 
