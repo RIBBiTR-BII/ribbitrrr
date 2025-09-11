@@ -271,6 +271,70 @@ stage_to_temp <- function(dbcon, reference_table, novel_data) {
   return(temp_table_name)
 }
 
+
+#' This set of functions support the modification of tables in a remote database .
+#'
+#' This set of functions allow you to modify a remote database table by first pushing new data to a temporary table with \link[ribbitrrr]{stage_to_temp}, then maiking use of the corresponding \link[dplyr]{rows} functions.
+#'  * db_rows_insert(dbcon, reference_table, novel_data, pkey)
+#'  * db_rows_update(dbcon, reference_table, novel_data, pkey)
+#'  * db_rows_upsert(dbcon, reference_table, novel_data, pkey)
+#'  * db_rows_delete(dbcon, reference_table, novel_data, pkey)
+#'
+#'
+#' @param dbcon Database connection (A valid and active DBI database connection object)
+#' @param reference_table A table pointer object pointing to the database table which you want to modify.
+#' @param novel_data Data Frame of rows to be pushed to the database
+#' @param pkey column name(s) for primary key used to join novel data with reference table
+#' @return An updated table pointer object (for future use).
+#' @examples
+#' if(FALSE) {
+#'   dbcon = HopToDB("ribbitr")
+#'   db_capture = dplyr::tbl(dbcon, "capture")
+#'   db_capture = db_rows_upsert(dbcon, db_capture, novel_capture, "capture_id")
+#' }
+#' @importFrom dplyr tbl rows_insert
+#' @export
+db_rows_insert <- function(dbcon, reference_table, modified_data, pkey) {
+  temp_table = stage_to_temp(dbcon, reference_table, modified_data)
+  temp_pointer = tbl(dbcon, temp_table)
+  db_mod = rows_insert(reference_table, temp_pointer, by=pkey, in_place=TRUE, conflict = "ignore")
+  return(db_mod)
+}
+
+
+#' @rdname db_rows_insert
+#' @importFrom dplyr tbl rows_update
+#' @export
+db_rows_update <- function(dbcon, reference_table, modified_data, pkey) {
+  temp_table = stage_to_temp(dbcon, reference_table, modified_data)
+  temp_pointer = tbl(dbcon, temp_table)
+  db_mod = rows_update(reference_table, temp_pointer, by=pkey, in_place=TRUE, unmatched = "ignore")
+  return(db_mod)
+}
+
+
+#' @rdname db_rows_insert
+#' @importFrom dplyr tbl rows_upsert
+#' @export
+db_rows_upsert <- function(dbcon, reference_table, modified_data, pkey) {
+  temp_table = stage_to_temp(dbcon, reference_table, modified_data)
+  temp_pointer = tbl(dbcon, temp_table)
+  db_mod = rows_upsert(reference_table, temp_pointer, by=pkey, in_place=TRUE)
+  return(db_mod)
+}
+
+
+#' @rdname db_rows_insert
+#' @importFrom dplyr tbl rows_delete
+#' @export
+db_rows_delete <- function(dbcon, reference_table, modified_data, pkey) {
+  temp_table = stage_to_temp(dbcon, reference_table, modified_data)
+  temp_pointer = tbl(dbcon, temp_table)
+  db_mod = rows_delete(reference_table, temp_pointer, by=pkey, in_place=TRUE, unmatched = "ignore")
+  return(db_mod)
+}
+
+
 #' Identify and resolve sample name conflicts
 #'
 #' Identifies sample_name/sample_type conflicts 1) within new data, 2) between new and old data, and 3) between new and old, previously conflicting and resolved data.
