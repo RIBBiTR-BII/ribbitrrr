@@ -1,5 +1,10 @@
 # ribbitrrr
 
+## [0.0.2.4] - 2025-09-16
+### Changed
+
+- hopToDB() defaults to showing the Environment Pane (rather than the connection pane) upon establishing a connection with hopRegister(). You can still view and browse the connection my navigating to the connection pane manually.
+
 ## [0.0.2.3] - 2025-04-15
 ### Added
 

@@ -165,6 +165,7 @@ hopRegister = function(dbcon, dbhost, dbname, connection_id, type) {
 #' @importFrom RPostgres Postgres
 #' @importFrom stats na.omit
 #' @importFrom yaml yaml.load_file
+#' @importFrom rstudioapi executeCommand
 #' @export
 hopToDB = function(prefix = NA, timezone = NULL, yaml = NA, hopReg = TRUE) {
   drv = dbDriver("Postgres")
@@ -308,6 +309,10 @@ hopToDB = function(prefix = NA, timezone = NULL, yaml = NA, hopReg = TRUE) {
       conn_session_set(id, meta_data)
 
       hopRegister(dbcon, host, database_name, id, type)
+
+      # switch back to environment pane
+      Sys.sleep(0.1)
+      executeCommand("activateEnvironment")
     }
 
     return(dbcon)
