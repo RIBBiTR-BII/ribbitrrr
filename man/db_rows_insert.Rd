@@ -7,20 +7,20 @@
 \alias{db_rows_delete}
 \title{This set of functions support the modification of tables in a remote database .}
 \usage{
-db_rows_insert(dbcon, reference_table, modified_data, pkey)
+db_rows_insert(dbcon, reference_table, modified_data, by)
 
-db_rows_update(dbcon, reference_table, modified_data, pkey)
+db_rows_update(dbcon, reference_table, modified_data, by)
 
-db_rows_upsert(dbcon, reference_table, modified_data, pkey)
+db_rows_upsert(dbcon, reference_table, modified_data, by)
 
-db_rows_delete(dbcon, reference_table, modified_data, pkey)
+db_rows_delete(dbcon, reference_table, modified_data, by)
 }
 \arguments{
 \item{dbcon}{Database connection (A valid and active DBI database connection object)}
 
 \item{reference_table}{A table pointer object pointing to the database table which you want to modify.}
 
-\item{pkey}{column name(s) for primary key used to join novel data with reference table}
+\item{by}{column name(s) for primary key by which to join novel data with reference table}
 
 \item{novel_data}{Data Frame of rows to be pushed to the database}
 }

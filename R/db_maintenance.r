@@ -284,7 +284,7 @@ stage_to_temp <- function(dbcon, reference_table, novel_data) {
 #' @param dbcon Database connection (A valid and active DBI database connection object)
 #' @param reference_table A table pointer object pointing to the database table which you want to modify.
 #' @param novel_data Data Frame of rows to be pushed to the database
-#' @param pkey column name(s) for primary key used to join novel data with reference table
+#' @param by column name(s) for primary key by which to join novel data with reference table
 #' @return An updated table pointer object (for future use).
 #' @examples
 #' if(FALSE) {
@@ -294,10 +294,10 @@ stage_to_temp <- function(dbcon, reference_table, novel_data) {
 #' }
 #' @importFrom dplyr tbl rows_insert
 #' @export
-db_rows_insert <- function(dbcon, reference_table, modified_data, pkey) {
+db_rows_insert <- function(dbcon, reference_table, modified_data, by) {
   temp_table = stage_to_temp(dbcon, reference_table, modified_data)
   temp_pointer = tbl(dbcon, temp_table)
-  db_mod = rows_insert(reference_table, temp_pointer, by=pkey, in_place=TRUE, conflict = "ignore")
+  db_mod = rows_insert(reference_table, temp_pointer, by=by, in_place=TRUE, conflict = "ignore")
   return(db_mod)
 }
 
@@ -305,10 +305,10 @@ db_rows_insert <- function(dbcon, reference_table, modified_data, pkey) {
 #' @rdname db_rows_insert
 #' @importFrom dplyr tbl rows_update
 #' @export
-db_rows_update <- function(dbcon, reference_table, modified_data, pkey) {
+db_rows_update <- function(dbcon, reference_table, modified_data, by) {
   temp_table = stage_to_temp(dbcon, reference_table, modified_data)
   temp_pointer = tbl(dbcon, temp_table)
-  db_mod = rows_update(reference_table, temp_pointer, by=pkey, in_place=TRUE, unmatched = "ignore")
+  db_mod = rows_update(reference_table, temp_pointer, by=by, in_place=TRUE, unmatched = "ignore")
   return(db_mod)
 }
 
@@ -316,10 +316,10 @@ db_rows_update <- function(dbcon, reference_table, modified_data, pkey) {
 #' @rdname db_rows_insert
 #' @importFrom dplyr tbl rows_upsert
 #' @export
-db_rows_upsert <- function(dbcon, reference_table, modified_data, pkey) {
+db_rows_upsert <- function(dbcon, reference_table, modified_data, by) {
   temp_table = stage_to_temp(dbcon, reference_table, modified_data)
   temp_pointer = tbl(dbcon, temp_table)
-  db_mod = rows_upsert(reference_table, temp_pointer, by=pkey, in_place=TRUE)
+  db_mod = rows_upsert(reference_table, temp_pointer, by=by, in_place=TRUE)
   return(db_mod)
 }
 
@@ -327,10 +327,10 @@ db_rows_upsert <- function(dbcon, reference_table, modified_data, pkey) {
 #' @rdname db_rows_insert
 #' @importFrom dplyr tbl rows_delete
 #' @export
-db_rows_delete <- function(dbcon, reference_table, modified_data, pkey) {
+db_rows_delete <- function(dbcon, reference_table, modified_data, by) {
   temp_table = stage_to_temp(dbcon, reference_table, modified_data)
   temp_pointer = tbl(dbcon, temp_table)
-  db_mod = rows_delete(reference_table, temp_pointer, by=pkey, in_place=TRUE, unmatched = "ignore")
+  db_mod = rows_delete(reference_table, temp_pointer, by=by, in_place=TRUE, unmatched = "ignore")
   return(db_mod)
 }
 
