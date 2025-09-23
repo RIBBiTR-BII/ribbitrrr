@@ -7,13 +7,13 @@
 \alias{db_rows_delete}
 \title{This set of functions support the modification of tables in a remote database .}
 \usage{
-db_rows_insert(dbcon, reference_table, modified_data, by)
+db_rows_insert(dbcon, reference_table, modified_data, by, silent_null = TRUE)
 
-db_rows_update(dbcon, reference_table, modified_data, by)
+db_rows_update(dbcon, reference_table, modified_data, by, silent_null = TRUE)
 
 db_rows_upsert(dbcon, reference_table, modified_data, by)
 
-db_rows_delete(dbcon, reference_table, modified_data, by)
+db_rows_delete(dbcon, reference_table, modified_data, by, silent_null = TRUE)
 }
 \arguments{
 \item{dbcon}{Database connection (A valid and active DBI database connection object)}
@@ -21,6 +21,8 @@ db_rows_delete(dbcon, reference_table, modified_data, by)
 \item{reference_table}{A table pointer object pointing to the database table which you want to modify.}
 
 \item{by}{column name(s) for primary key by which to join novel data with reference table}
+
+\item{silent_null}{boolean: do you want to silently skip the operation if there are no rows in the passed dataframe (TRUE by default, otherwise throws a warning)}
 
 \item{novel_data}{Data Frame of rows to be pushed to the database}
 }

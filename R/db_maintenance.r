@@ -285,6 +285,7 @@ stage_to_temp <- function(dbcon, reference_table, novel_data) {
 #' @param reference_table A table pointer object pointing to the database table which you want to modify.
 #' @param novel_data Data Frame of rows to be pushed to the database
 #' @param by column name(s) for primary key by which to join novel data with reference table
+#' @param silent_null boolean: do you want to silently skip the operation if there are no rows in the passed dataframe (TRUE by default, otherwise throws a warning)
 #' @return An updated table pointer object (for future use).
 #' @examples
 #' if(FALSE) {
@@ -294,8 +295,15 @@ stage_to_temp <- function(dbcon, reference_table, novel_data) {
 #' }
 #' @importFrom dplyr tbl rows_insert
 #' @export
-db_rows_insert <- function(dbcon, reference_table, modified_data, by) {
-  temp_table = stage_to_temp(dbcon, reference_table, modified_data)
+db_rows_insert <- function(dbcon, reference_table, modified_data, by, silent_null = TRUE) {
+  if (nrow(modified_data) == 0) {
+    if (!silent_null) {
+      warning("No rows submitted, skipping.")
+    }
+    return(db_mod)
+  }
+
+  temp_table = stage_to_temp(dbcon, reference_table, modified_data, silent_null = TRUE)
   temp_pointer = tbl(dbcon, temp_table)
   db_mod = rows_insert(reference_table, temp_pointer, by=by, in_place=TRUE, conflict = "ignore")
   return(db_mod)
@@ -305,8 +313,15 @@ db_rows_insert <- function(dbcon, reference_table, modified_data, by) {
 #' @rdname db_rows_insert
 #' @importFrom dplyr tbl rows_update
 #' @export
-db_rows_update <- function(dbcon, reference_table, modified_data, by) {
-  temp_table = stage_to_temp(dbcon, reference_table, modified_data)
+db_rows_update <- function(dbcon, reference_table, modified_data, by, silent_null = TRUE) {
+  if (nrow(modified_data) == 0) {
+    if (!silent_null) {
+      warning("No rows submitted, skipping.")
+    }
+    return(db_mod)
+  }
+
+  temp_table = stage_to_temp(dbcon, reference_table, modified_data, silent_null = TRUE)
   temp_pointer = tbl(dbcon, temp_table)
   db_mod = rows_update(reference_table, temp_pointer, by=by, in_place=TRUE, unmatched = "ignore")
   return(db_mod)
@@ -317,7 +332,14 @@ db_rows_update <- function(dbcon, reference_table, modified_data, by) {
 #' @importFrom dplyr tbl rows_upsert
 #' @export
 db_rows_upsert <- function(dbcon, reference_table, modified_data, by) {
-  temp_table = stage_to_temp(dbcon, reference_table, modified_data)
+  if (nrow(modified_data) == 0) {
+    if (!silent_null) {
+      warning("No rows submitted, skipping.")
+    }
+    return(db_mod)
+  }
+
+  temp_table = stage_to_temp(dbcon, reference_table, modified_data, silent_null = TRUE)
   temp_pointer = tbl(dbcon, temp_table)
   db_mod = rows_upsert(reference_table, temp_pointer, by=by, in_place=TRUE)
   return(db_mod)
@@ -327,7 +349,14 @@ db_rows_upsert <- function(dbcon, reference_table, modified_data, by) {
 #' @rdname db_rows_insert
 #' @importFrom dplyr tbl rows_delete
 #' @export
-db_rows_delete <- function(dbcon, reference_table, modified_data, by) {
+db_rows_delete <- function(dbcon, reference_table, modified_data, by, silent_null = TRUE) {
+  if (nrow(modified_data) == 0) {
+    if (!silent_null) {
+      warning("No rows submitted, skipping.")
+    }
+    return(db_mod)
+  }
+
   temp_table = stage_to_temp(dbcon, reference_table, modified_data)
   temp_pointer = tbl(dbcon, temp_table)
   db_mod = rows_delete(reference_table, temp_pointer, by=by, in_place=TRUE, unmatched = "ignore")
