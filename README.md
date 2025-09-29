@@ -11,14 +11,12 @@ and manipulation to meet research and team science project goals.
 You can install the development version of ribbitrrr from [GitHub](https://github.com/) with:
 
 ``` r
-# install.packages("librarian")
-librarian::shelf("RIBBiTR-BII/ribbitrrr")
+remotes::install_github('RIBBiTR-BII/ribbitrrr')
 ```
 
 or
 
 ``` r
-# install.packages("pak")
-pak::pak()
+# install.packages("librarian")
+librarian::shelf("RIBBiTR-BII/ribbitrrr")
 ```
-
