@@ -310,9 +310,9 @@ hopToDB = function(prefix = NA, timezone = NULL, yaml = NA, hopReg = TRUE) {
 
       hopRegister(dbcon, host, database_name, id, type)
 
-      # switch back to environment pane
-      Sys.sleep(0.1)
-      executeCommand("activateEnvironment")
+      # # switch back to environment pane
+      # Sys.sleep(0.1)
+      # executeCommand("activateEnvironment")
     }
 
     return(dbcon)
