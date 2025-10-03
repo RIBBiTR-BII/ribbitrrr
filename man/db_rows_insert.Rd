@@ -11,7 +11,7 @@ db_rows_insert(dbcon, reference_table, modified_data, by, silent_null = TRUE)
 
 db_rows_update(dbcon, reference_table, modified_data, by, silent_null = TRUE)
 
-db_rows_upsert(dbcon, reference_table, modified_data, by)
+db_rows_upsert(dbcon, reference_table, modified_data, by, silent_null = TRUE)
 
 db_rows_delete(dbcon, reference_table, modified_data, by, silent_null = TRUE)
 }
