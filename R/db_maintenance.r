@@ -300,7 +300,7 @@ db_rows_insert <- function(dbcon, reference_table, modified_data, by, silent_nul
     if (!silent_null) {
       warning("No rows submitted, skipping.")
     }
-    return(db_mod)
+    return(reference_table)
   }
 
   temp_table = stage_to_temp(dbcon, reference_table, modified_data)
@@ -318,7 +318,7 @@ db_rows_update <- function(dbcon, reference_table, modified_data, by, silent_nul
     if (!silent_null) {
       warning("No rows submitted, skipping.")
     }
-    return(db_mod)
+    return(reference_table)
   }
 
   temp_table = stage_to_temp(dbcon, reference_table, modified_data)
@@ -336,7 +336,7 @@ db_rows_upsert <- function(dbcon, reference_table, modified_data, by, silent_nul
     if (!silent_null) {
       warning("No rows submitted, skipping.")
     }
-    return(db_mod)
+    return(reference_table)
   }
 
   temp_table = stage_to_temp(dbcon, reference_table, modified_data)
@@ -354,7 +354,7 @@ db_rows_delete <- function(dbcon, reference_table, modified_data, by, silent_nul
     if (!silent_null) {
       warning("No rows submitted, skipping.")
     }
-    return(db_mod)
+    return(reference_table)
   }
 
   temp_table = stage_to_temp(dbcon, reference_table, modified_data)
