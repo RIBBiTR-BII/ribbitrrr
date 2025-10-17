@@ -221,6 +221,7 @@ ribbitr_clean_taxa <- function(data, taxon_column, comment_column = NULL) {
     'Desmognathaus_sp.' = 'desmognathus',
     'desmognathus_sp.' = 'desmognathus',
     'desmongnathus_sp' = 'desmognathus',
+    'desmognathaus_sp.' = 'desmognathus',
     'diasporus_spp' = 'diasporus',
     'diasporus_spp.' = 'diasporus',
     'duellmanohyla_spp' = 'duellmanohyla',
