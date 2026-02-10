@@ -4,6 +4,7 @@
 #' @param data_old A reference data frame containing the existing data
 #' @param data_new A data frame containing the new data to be compared with the existing data
 #' @param key_columns A character vector of key columns used to distinguish "insert", "update", and "orphan" rows. Can be a primary key or natural key, depending on needs.
+#' @param check_df_cols Logical: do you want to check for diferences in column names between old and new data? Any differences will be reported as a warning. TRUE by deault.
 #' @param return_all Logical: do you want to perform all comparisons (insert, update, orphan, duplicate)? Overrides previous logical parmeters. False by default.
 #' @param insert Logical: do you want to check for new rows to insert? TRUE by default.
 #' @param update Logical: do you want to check for new rows to update? TRUE by default.
@@ -24,7 +25,7 @@
 #' @importFrom dplyr %>% bind_rows anti_join group_by_at count ungroup mutate filter select inner_join
 #' @export
 #'
-compare_for_staging = function(data_old, data_new, key_columns, return_all=TRUE, insert=TRUE, update=TRUE, orphan=FALSE, duplicate=FALSE, report=FALSE){
+compare_for_staging = function(data_old, data_new, key_columns, check_df_cols = TRUE, return_all=TRUE, insert=TRUE, update=TRUE, orphan=FALSE, duplicate=FALSE, report=FALSE){
 
   # Check for key column duplicates
   old_dups = nrow(data_old %>%
@@ -46,6 +47,23 @@ compare_for_staging = function(data_old, data_new, key_columns, return_all=TRUE,
 
   if (new_dups != 0) {
     stop("Duplicate key_column combinations found in data_new. Comparison aborted.")
+  }
+
+  # compare_df_cols
+  if (check_df_cols) {
+    cols_old = colnames(data_old)
+    cols_new = colnames(data_new)
+
+    not_in_old = setdiff(cols_new, cols_old)
+    not_in_new = setdiff(cols_old, cols_new)
+
+    if (length(not_in_new) > 0) {
+      warning("The following columns are present in `data_old` and absent from `data_new`:\n\t\t", paste0(not_in_new, collapse = "\n\t\t"))
+    }
+
+    if (length(not_in_old) > 0) {
+      warning("The following columns are present in `data_new` and absent from `data_old`:\n\t\t", paste0(not_in_old, collapse = "\n\t\t"))
+    }
   }
 
   output = list()

@@ -8,6 +8,7 @@ compare_for_staging(
   data_old,
   data_new,
   key_columns,
+  check_df_cols = TRUE,
   return_all = TRUE,
   insert = TRUE,
   update = TRUE,
@@ -22,6 +23,8 @@ compare_for_staging(
 \item{data_new}{A data frame containing the new data to be compared with the existing data}
 
 \item{key_columns}{A character vector of key columns used to distinguish "insert", "update", and "orphan" rows. Can be a primary key or natural key, depending on needs.}
+
+\item{check_df_cols}{Logical: do you want to check for diferences in column names between old and new data? Any differences will be reported as a warning. TRUE by deault.}
 
 \item{return_all}{Logical: do you want to perform all comparisons (insert, update, orphan, duplicate)? Overrides previous logical parmeters. False by default.}
 
