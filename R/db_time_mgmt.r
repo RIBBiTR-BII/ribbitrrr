@@ -129,7 +129,7 @@ start_timestamp_utc = function(date, start_time, tz) {
 #' @param start_time as time
 #' @param end_time as time
 #' @param tz timezone from OlsonNames()
-#' @importFrom lubridate ymd_hms force_tz
+#' @importFrom lubridate ymd_hms force_tz days
 #' @export
 end_timestamp_local = function(date, start_time, end_time, tz) {
   start = force_tz(ymd_hms(paste(date, start_time)), tzone = tz)
@@ -219,4 +219,67 @@ clean_survey_times = function(df, tz) {
     mutate(start_timestamp_utc = start_timestamp_utc(date, start_time, tz),
            end_timestamp_utc = end_timestamp_utc(date, start_time, end_time, tz),
            duration_minutes = duration_minutes(start_timestamp_utc, end_timestamp_utc))
+}
+
+
+#' survey_timestamps_utc
+#'
+#' Survey start & end timestamps in UTC, with their precision. Where a start time is known, timestamps are as
+#' `start_timestamp_utc()` & `end_timestamp_utc()` (precision "minute"). Where only the date is known, the survey
+#' spans that local day: from local midnight to the following local midnight (precision "day").
+#' Returns a data frame, so it can be used unnamed in `mutate()` to add all three columns. With `span = TRUE` (e.g. in a
+#' `mutate()` grouped by survey) every row gets the span of all rows: earliest start, latest end, and "day" precision if
+#' any row is date only.
+#' @param date date as Date (local date of the survey)
+#' @param start_time local start time (hms or "HH:MM:SS"), NA where unknown
+#' @param end_time local end time (hms or "HH:MM:SS"), NA where unknown
+#' @param tz timezone from OlsonNames()
+#' @param span Logical: return the span of all rows on every row? FALSE by default.
+#' @return data frame with columns start_timestamp_utc, end_timestamp_utc & timestamp_precision
+#' @examples
+#' survey_timestamps_utc(as.Date(c("2022-05-10", "2022-05-10")),
+#'                       c("21:30:00", NA), c("23:10:00", NA), "America/New_York")
+#' @export
+survey_timestamps_utc = function(date, start_time, end_time = NA, tz, span = FALSE) {
+  if (length(tz) != 1 || is.na(tz)) {
+    stop("tz must be a single time zone from OlsonNames()")
+  }
+
+  n = max(length(date), length(start_time), length(end_time))
+  date = rep(as.Date(date), length.out = n)
+  start_time = rep(start_time, length.out = n)
+  end_time = rep(end_time, length.out = n)
+
+  timed = !is.na(date) & !is.na(start_time)
+  timed_end = timed & !is.na(end_time)
+  dated = !is.na(date) & is.na(start_time)
+
+  start_ts = .POSIXct(rep(NA_real_, n), tz = "UTC")
+  end_ts = .POSIXct(rep(NA_real_, n), tz = "UTC")
+
+  if (any(timed)) {
+    start_ts[timed] = start_timestamp_utc(date[timed], start_time[timed], tz)
+  }
+  if (any(timed_end)) {
+    end_ts[timed_end] = end_timestamp_utc(date[timed_end], start_time[timed_end], end_time[timed_end], tz)
+  }
+  # date only: the whole local day
+  if (any(dated)) {
+    start_ts[dated] = start_timestamp_utc(date[dated], "00:00:00", tz)
+    end_ts[dated] = start_timestamp_utc(date[dated] + 1, "00:00:00", tz)
+  }
+
+  precision = rep(NA_character_, n)
+  precision[timed] = "minute"
+  precision[dated] = "day"
+
+  if (span && any(!is.na(start_ts))) {
+    start_ts[] = min(start_ts, na.rm = TRUE)
+    end_ts[] = if (any(!is.na(end_ts))) max(end_ts, na.rm = TRUE) else NA
+    precision[] = if (any(precision %in% "day")) "day" else "minute"
+  }
+
+  data.frame(start_timestamp_utc = start_ts,
+             end_timestamp_utc = end_ts,
+             timestamp_precision = precision)
 }
